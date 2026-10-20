@@ -1,16 +1,20 @@
-# Platform Infra — Bukti Kompetensi
+# Platform Infrastructure — Competency Proof
 
-Repo infrastruktur dan kontrol rilis demo data sintetis nusacred-lab.
-Target operasi: satu VM Linux x86_64 dengan Docker Compose, HTTPS, jaringan privat,
-Keycloak/PostgreSQL, backend aplikasi, issuer/wallet/verifier dan SMTP privat.
-Build/CI berjalan di luar VM; backup terenkripsi di luar VM, restore dan rollback
-harus terbukti sebelum demo dibuka. Provider, region dan tujuan backup belum dipilih.
+Infrastructure and release controls for the nusacred-lab synthetic-data demo.
+Target operations: one Linux x86_64 VM with Docker Compose, HTTPS, private
+networks, Keycloak/PostgreSQL, the application backend, issuer/wallet/verifier,
+and private SMTP. Builds and CI run outside the VM. Encrypted off-VM backups,
+restoration, and rollback must be demonstrated before opening the demo.
+The provider, region, and backup destination have not been selected.
 
-Status P1: fondasi repo dan CI. Belum ada konfigurasi produksi siap deploy.
-Jangan memakai Compose harness Python sebagai deployment publik.
-Simpan hanya template non-secret. Database, key, keystore, token, runtime dan backup
-berada di penyimpanan privat. Tidak ada akses deploy/publish dari workflow PR.
+P1 status: repository and CI foundations. Production configuration is not yet
+ready to deploy. Do not use the Python harness Compose setup as a public
+deployment. Store only templates without secrets. Databases, keys, keystores,
+tokens, runtime data, and backups belong in private storage. Pull request
+workflows have no deployment or publishing privileges.
 
-Pemeriksaan lokal: `python3 ci/check_policy.py`. CI memindai seluruh riwayat Git
-dan perubahan dependency. Lihat SECURITY-PROJECT.md untuk batas kontrol/review.
-Kode proyek: Apache-2.0 (LICENSE).
+Local check: `python3 ci/check_policy.py`. CI scans the full Git history and
+reviews dependency changes. See SECURITY-PROJECT.md for control and review limits.
+Project code: Apache-2.0 (LICENSE).
+
+All repository work must use English; see [AGENTS.md](AGENTS.md).

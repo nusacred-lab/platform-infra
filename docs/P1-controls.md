@@ -1,27 +1,32 @@
-# Kontrol P1
+# P1 Controls
 
-Tanggal: 20 Oktober 2026. Repo publik nusacred-lab, lisensi Apache-2.0.
-Default branch `main` mewajibkan PR serta checks `security` dan `dependency-review`
-dari GitHub Actions app 15368. Branch harus mutakhir, force push/deletion dilarang,
-aturan berlaku untuk admin, dan percakapan review harus diselesaikan.
+Date: 20 October 2026. Public nusacred-lab repository, Apache-2.0 license.
+The default branch `main` requires pull requests and the `security` and
+`dependency-review` checks from GitHub Actions app 15368. Branches must be current;
+force pushes and deletion are prohibited. Rules apply to administrators, and
+review conversations must be resolved.
 
-Actions memakai SHA penuh, runner sementara dan token default read-only; workflow
-tidak boleh menyetujui PR. Hanya action milik GitHub yang diizinkan. Secret scanning,
-push protection, vulnerability alerts dan private vulnerability reporting aktif.
-Fitur non-provider pattern tidak aktif menurut pembacaan balik; Gitleaks menambah
-pemindaian pola umum pada seluruh riwayat Git. Dependency review PR bukan pengganti
-SCA hasil resolusi serta scan image.
+Actions are pinned to full commit SHAs, use ephemeral runners, and have read-only
+default tokens. Workflows cannot approve pull requests. Only GitHub-owned actions
+are allowed. Secret scanning, push protection, vulnerability alerts, and private
+vulnerability reporting are enabled. Readback shows non-provider patterns are not
+enabled; Gitleaks adds generic-pattern scanning across the full Git history.
+Pull request dependency review does not replace resolved-dependency SCA or image
+scanning.
 
-Hanya ada satu maintainer (`abeinoe`). PR dan CI diwajibkan, tetapi jumlah approval
-manusia disetel nol; CODEOWNERS tidak diklaim sebagai review dua orang atau kontrol
-review independen yang sudah berlaku. Commit fondasi pertama dipush sebelum proteksi
-untuk menyediakan workflow awal; perubahan selanjutnya mengikuti PR.
+There is one maintainer (`abeinoe`). Pull requests and CI are required, but the
+required human approval count is zero. CODEOWNERS does not establish two-person
+or independent review. The initial foundation commit was pushed before branch
+protection to establish the workflows; later changes follow the pull request path.
 
-Bukti uji negatif: https://github.com/nusacred-lab/bukti-kompetensi/pull/1
-File penanda tidak berbahaya membuat check security gagal; percobaan merge admin
-benar-benar ditolak dengan pesan `Required status check "security" is failing.`
-PR uji kemudian ditutup tanpa merge. Tidak ada CVE atau secret sengaja dipublikasikan.
+Negative gate evidence: https://github.com/nusacred-lab/competency-proof/pull/1
+A harmless marker file made the security check fail. An administrator merge
+attempt was rejected with `Required status check "security" is failing.` The
+trial pull request was then closed without merging. No CVE or secret was
+intentionally published.
 
-G1 proyek belum lulus. Build fork, penguncian/verifikasi dependency serta scan
-baseline dan image target dilacak di repo waltid-identity; fondasi repo ini tidak
-menyatakan aplikasi atau deployment telah tersedia.
+Historical P1 foundation status: project G1 had not passed at this point. Fork
+builds, dependency locking/verification, and baseline/target-image scans are
+tracked in waltid-identity. This repository foundation does not establish that
+the application or deployment is available. Current gate status follows the
+workspace implementation plan and its latest evidence.
