@@ -1,6 +1,6 @@
 # Project security controls
 
-This repository belongs to the synthetic-data Bukti Kompetensi demo on nusacred-lab.
+This repository belongs to the synthetic-data Competency Proof demo on nusacred-lab.
 CI uses ephemeral GitHub-hosted runners, read-only tokens, full-SHA actions and
 checksum-verified scanners. There are no production credentials, registry publish
 or deployment jobs. Scanner errors and High/Critical findings block acceptance.
