@@ -18,6 +18,9 @@ jobs:
           fetch-depth: 0
           persist-credentials: false
       - run: python3 ci/check_policy.py
+      - run: python3 ci/install_tool.py actionlint "$RUNNER_TEMP/tools"
+      - name: Validate workflow syntax and expressions
+        run: '"$RUNNER_TEMP/tools/actionlint" -shellcheck="" -pyflakes=""'
       - run: python3 ci/install_tool.py gitleaks "$RUNNER_TEMP/tools"
       - name: Scan complete Git history (redacted)
         run: '"$RUNNER_TEMP/tools/gitleaks" git . --redact --no-banner'
