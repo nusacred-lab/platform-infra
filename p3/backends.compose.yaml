@@ -1,0 +1,24 @@
+# Merge after p2/portals.compose.yaml. This file adds no public route or host port.
+services:
+  issuer-backend:
+    image: ${P3_ISSUER_IMAGE:?Build and scan the P3 issuer image}
+    environment:
+      APPLICATION_DB_PATH: /data/issuer.sqlite
+      OIDC_ORGANIZATION_ASSIGNMENTS_FILE: /run/secrets/issuer-organizations
+    volumes: [issuer-application-data:/data]
+    secrets: [issuer-organizations]
+  company-backend:
+    image: ${P3_COMPANY_IMAGE:?Build and scan the P3 company image}
+    environment:
+      APPLICATION_DB_PATH: /data/company.sqlite
+      OIDC_ORGANIZATION_ASSIGNMENTS_FILE: /run/secrets/company-organizations
+    volumes: [company-application-data:/data]
+    secrets: [company-organizations]
+volumes:
+  issuer-application-data:
+  company-application-data:
+secrets:
+  issuer-organizations:
+    file: ${P2_RUNTIME:?}/issuer-organizations.json
+  company-organizations:
+    file: ${P2_RUNTIME:?}/company-organizations.json
