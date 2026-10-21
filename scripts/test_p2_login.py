@@ -176,7 +176,8 @@ def main():
     native_header = {"Authorization": "Bearer " + opaque}
     status, _, me = json_request(browser, "/auth/me", headers=native_header)
     assert status == 200 and me["subject"] == fixtures["applicant"]["id"]
-    assert set(me) == {"email", "subject", "csrf", "wallet_access"}
+    assert set(me) == {"email", "subject", "csrf", "wallet_access", "expires_at"}
+    assert int(time.time()) < me["expires_at"] <= int(time.time()) + 1800
     passed("Real native public-client PKCE login and opaque application session")
     assert json_request(browser, "/auth/native/session", "POST", dict(ticket=flow["ticket"],
         access_token=tokens["access_token"], id_token=tokens["id_token"]))[0] == 401
