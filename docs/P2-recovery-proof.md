@@ -126,3 +126,10 @@ for physical APK acceptance.
 
 A verified domain and an installed signed APK do not prove a physical QR scan or
 completed credential/recovery journey. Keep G2 open until those results are recorded.
+
+
+Physical phone evidence now also covers synthetic email recovery, rejection of the
+old native session, actual candidate uninstall/reinstall, fresh HTTPS callback
+login and presentation of the byte-identical retained credential (`SUCCESSFUL`).
+An actual Chrome button opens the signed APK's verified HTTPS request without
+sending automatically. Optical camera scanning remains a separate pending check.
