@@ -1,0 +1,6 @@
+# Package the locally compiled, checksum-recorded binary without rebuilding it.
+# Build context must be the private directory containing only the caddy binary.
+FROM scratch
+COPY caddy /usr/bin/caddy
+USER 65532:65532
+CMD ["/usr/bin/caddy", "version"]

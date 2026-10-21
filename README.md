@@ -1,11 +1,15 @@
 # Platform Infrastructure — Competency Proof
 
 Infrastructure and release controls for the nusacred-lab synthetic-data demo.
-Target operations: one Linux x86_64 VM with Docker Compose, HTTPS, private
-networks, Keycloak/PostgreSQL, the application backend, issuer/wallet/verifier,
-and private SMTP. Builds and CI run outside the VM. Encrypted off-VM backups,
-restoration, and rollback must be demonstrated before opening the demo.
-The provider, region, and backup destination have not been selected.
+Target operations: one local Linux x86_64 host with Docker Compose and Pinggy Pro
+TLS passthrough. Caddy terminates TLS locally. Public demo hostnames live under
+`demo.inoerawan.id`; Rumahweb manages DNS. Builds primarily run on ephemeral
+GitHub Actions runners, outside the active demo runtime. Encrypted off-host
+backups, restoration, and rollback remain required.
+
+The [local demo runbook](docs/local-demo.md) prepares a loopback-only TLS probe.
+It does not deploy the application, Keycloak, or credential services. Public
+routing and G1 containment must be reviewed before those services are exposed.
 
 P1 status: repository and CI foundations. Production configuration is not yet
 ready to deploy. Do not use the Python harness Compose setup as a public

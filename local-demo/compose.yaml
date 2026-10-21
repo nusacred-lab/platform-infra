@@ -1,0 +1,34 @@
+name: competency-proof-local-edge
+services:
+  edge:
+    image: ${CADDY_IMAGE:?Set the scanned image digest in the private environment file}
+    pull_policy: never
+    user: "${LOCAL_UID:?}:${LOCAL_GID:?}"
+    command: ["caddy", "run", "--config", "/etc/caddy/Caddyfile", "--adapter", "caddyfile"]
+    ports:
+      - "127.0.0.1:8443:8443"
+    volumes:
+      - ./Caddyfile:/etc/caddy/Caddyfile:ro,Z
+      - ${DEMO_RUNTIME:?}/proxy/tls:/certificates:ro,Z
+    environment:
+      XDG_CONFIG_HOME: /tmp/config
+      XDG_DATA_HOME: /tmp/data
+    read_only: true
+    tmpfs:
+      - /tmp:rw,noexec,nosuid,size=16m,mode=1777
+    cap_drop: [ALL]
+    security_opt: [no-new-privileges:true]
+    pids_limit: 64
+    mem_limit: 128m
+    cpus: 0.5
+    restart: "no"
+    logging:
+      driver: json-file
+      options:
+        max-size: 5m
+        max-file: "2"
+    networks: [edge]
+networks:
+  edge:
+    # Dedicated ingress bridge. Credential services must not join this network.
+    driver: bridge
