@@ -30,6 +30,7 @@ expected = json.loads((Path(__file__).resolve().parents[1] / "p2/realm-template.
 native_expected = next(c for c in expected["clients"] if c["clientId"] == "android-wallet-p2")
 native_actual = next(c for c in clients if c["clientId"] == "android-wallet-p2")
 native_actual["redirectUris"] = native_expected["redirectUris"]
+native_actual.setdefault("attributes", {}).update(native_expected["attributes"])
 assert request("PUT", base + "/clients/" + native_actual["id"], native_actual, token=token)[0] == 204
 for client in expected["clients"]:
     if not client.get("protocolMappers"):

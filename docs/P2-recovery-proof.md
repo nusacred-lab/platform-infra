@@ -150,3 +150,13 @@ actual same-second Keycloak proof. It uses private TLS and a quiescent private
 SQLite/WAL snapshot, records only sanitized outcomes, and reports incomplete if
 service latency prevents observing equal timestamps. It never substitutes a
 forged token or a simulated IdP result. All five real-service checks passed.
+
+
+The P2 native client explicitly configures `access.token.lifespan=900`; the realm
+and portal defaults stay unchanged. `configure_p2_login.py` applies the native
+attribute to existing clients and `check_p2_identity.py` verifies it. This gives
+manual phone testing a bounded fifteen-minute session while live introspection
+and the recovery registry continue to revoke access immediately. The APK displays
+expiry without interrupting the camera and retains only unexpired request context.
+`test_p2_recovery_anonymous.py` compares the actual public feedback for known and
+unknown synthetic users and verifies existing wallet access stays open.

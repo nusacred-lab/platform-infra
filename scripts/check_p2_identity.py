@@ -79,6 +79,7 @@ def main():
     clients = {client["clientId"]: client for client in clients}
     native = clients["android-wallet-p2"]
     assert native["publicClient"] and not native.get("secret")
+    assert native["attributes"]["access.token.lifespan"] == "900"
     assert set(native["redirectUris"]) == {"id.nusacred.wallet.debug:/oauth2redirect",
         "https://wallet-p2.demo.inoerawan.id/auth/android/callback"}
     for client_id in ("android-wallet-p2", "issuer-bff-p2", "custodian-bff-p2", "company-bff-p2"):
