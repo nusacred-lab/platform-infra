@@ -1,0 +1,8 @@
+http://:8080 {
+    header {
+        Cache-Control no-store
+        X-Content-Type-Options nosniff
+        Referrer-Policy no-referrer
+    }
+    reverse_proxy custodian:8080
+}

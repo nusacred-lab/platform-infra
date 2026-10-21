@@ -105,3 +105,32 @@ References: [Keycloak container guide](https://www.keycloak.org/server/container
 [Keycloak 26.8.1 fixes](https://www.keycloak.org/2026/10/keycloak-2681-released),
 [Mailpit releases](https://github.com/axllent/mailpit/releases), and
 [PostgreSQL security](https://www.postgresql.org/support/security/).
+
+## Containerized application follow-up
+
+The owner confirmed on 21 October that all server components must run in
+containers, the custodial interface must be a physical Android APK and recovery
+is mandatory. The native APK is the phone-side client; server-side components
+run in Compose. Functional code is prioritized over handover artifacts.
+
+Build `competency-proof-p2-custodian:0.2.0` from `nusacred-lab/competency-proof`
+using its `deploy/Containerfile.custodian` after the strict backend/portal build.
+Then, from this infrastructure repository:
+
+```sh
+python3 scripts/check_p2_images.py --runtime runtime/p2 --scanner /absolute/path/to/trivy --cache runtime/trivy-cache --with-application
+python3 scripts/prepare_p2.py --runtime runtime/p2 --tls runtime/local-demo/proxy/tls
+docker compose --env-file runtime/p2/compose.env -f p2/compose.yaml -f p2/application.compose.yaml config --quiet
+docker compose --env-file runtime/p2/compose.env -f p2/compose.yaml -f p2/application.compose.yaml up -d --no-build
+```
+
+The optional override adds a read-only non-root application container on its own
+internal bridge. Only the diagnostic proxy joins that bridge; no host port or
+identity/database mount is granted directly to the application. The proxy serves
+application traffic on `127.0.0.1:18080`. The Ktor service hosts the compiled portal
+on the same origin. The base identity stack remains usable without this override.
+Run `ci/check_container_probe.py` from the application repository to verify it.
+Use both Compose files when stopping/recreating the combined stack. Do not omit
+the override during routine combined-stack updates. This is still a minimal stack
+probe: issuer/company backends, login, wallet mapping and recovery integration
+remain pending. No public tunnel route is enabled by this override.

@@ -15,3 +15,6 @@ https://auth-p2.demo.inoerawan.id:8443 {
 http://:8025 {
     reverse_proxy mail:8025
 }
+
+# An empty glob keeps the identity-only stack independent of the application.
+import /etc/caddy/optional/*.caddy

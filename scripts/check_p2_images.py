@@ -10,6 +10,7 @@ def main():
     parser.add_argument("--runtime", required=True, type=Path)
     parser.add_argument("--scanner", required=True, type=Path)
     parser.add_argument("--cache", required=True, type=Path)
+    parser.add_argument("--with-application", action="store_true")
     args = parser.parse_args()
     images = {
         "P2_EDGE_IMAGE": "competency-proof-local-edge:reviewed",
@@ -17,6 +18,8 @@ def main():
         "P2_MAILPIT_IMAGE": "competency-proof-p2-mailpit:1.31.5",
         "P2_KEYCLOAK_IMAGE": "competency-proof-p2-keycloak:26.8.1",
     }
+    if args.with_application:
+        images["P2_CUSTODIAN_IMAGE"] = "competency-proof-p2-custodian:0.2.0"
     runtime = args.runtime.resolve()
     if "runtime" not in runtime.parts or not runtime.is_dir():
         parser.error("Prepare an ignored private runtime directory first.")
@@ -38,7 +41,7 @@ def main():
     target = runtime / "runtime-images.json"
     target.write_text(json.dumps(accepted, indent=2) + "\n")
     target.chmod(0o600)
-    print("PASS: four immutable runtime images have no detected High/Critical vulnerabilities.")
+    print(f"PASS: {len(images)} immutable runtime images have no detected High/Critical vulnerabilities.")
 
 
 if __name__ == "__main__":

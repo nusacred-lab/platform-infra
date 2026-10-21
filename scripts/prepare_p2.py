@@ -60,6 +60,10 @@ def main():
             if not re.fullmatch(r"sha256:[a-f0-9]{64}", pinned[name]):
                 parser.error("Runtime images must be scanned immutable image IDs.")
             env[name] = pinned[name]
+        if "P2_CUSTODIAN_IMAGE" in pinned:
+            if not re.fullmatch(r"sha256:[a-f0-9]{64}", pinned["P2_CUSTODIAN_IMAGE"]):
+                parser.error("The application image must be a scanned immutable image ID.")
+            env["P2_CUSTODIAN_IMAGE"] = pinned["P2_CUSTODIAN_IMAGE"]
     if any("\n" in value or " " in value for value in env.values()):
         parser.error("Runtime paths must not contain spaces or newlines.")
     env_path = runtime / "compose.env"

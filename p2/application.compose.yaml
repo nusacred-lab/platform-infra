@@ -1,0 +1,26 @@
+# Merge with p2/compose.yaml after building and scanning the application image.
+services:
+  custodian:
+    image: ${P2_CUSTODIAN_IMAGE:?Build and scan the immutable application image first}
+    networks: [application]
+    environment:
+      JAVA_TOOL_OPTIONS: -Xms32m -Xmx192m -XX:ActiveProcessorCount=2
+    read_only: true
+    tmpfs: ["/tmp:rw,noexec,nosuid,size=32m"]
+    cap_drop: [ALL]
+    security_opt: [no-new-privileges:true]
+    mem_limit: 384m
+    cpus: 0.5
+    pids_limit: 128
+    restart: "no"
+    logging:
+      driver: json-file
+      options: {max-size: 5m, max-file: "2"}
+  access:
+    ports: ["127.0.0.1:18080:8080"]
+    volumes:
+      - ./application.caddy:/etc/caddy/optional/application.caddy:ro,Z
+    networks: [identity, diagnostics, application]
+networks:
+  application:
+    internal: true
