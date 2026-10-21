@@ -12,6 +12,7 @@ import ssl
 def main():
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--loopback", action="store_true", help="Connect to the local edge on 8443 instead of public DNS")
+    parser.add_argument("--credential-testing", action="store_true", help="Check the explicitly approved expanded P2 test ingress")
     parser.add_argument("--output", type=Path, required=True)
     args = parser.parse_args()
     checks = []
@@ -42,17 +43,17 @@ def main():
     for path in ("/.well-known/openid-configuration", "/protocol/openid-connect/certs"):
         check("auth-p2", "/realms/competency-proof-p2" + path, 200)
     for path in ("/admin/", "/realms/master/.well-known/openid-configuration",
-                 "/realms/competency-proof-p2/account/",
-                 "/realms/competency-proof-p2/login-actions/reset-credentials",
-                 "/realms/competency-proof-p2/login-actions/required-action",
-                 "/realms/competency-proof-p2/login-actions/action-token", "/api/v1/messages"):
+                 "/realms/competency-proof-p2/account/", "/api/v1/messages"):
         check("auth-p2", path, 404)
+    for action, expanded_status in (("reset-credentials", 200), ("required-action", 400), ("action-token", 400)):
+        check("auth-p2", "/realms/competency-proof-p2/login-actions/" + action,
+              expanded_status if args.credential_testing else 404)
     check("wallet-p2", "/", 200)
     check("wallet-p2", "/auth/native/start", 200, "POST", b"{}")
     check("wallet-p2", "/auth/me", 401)
     check("wallet-p2", "/.well-known/assetlinks.json", 200)
     for action in ("provision", "reconcile", "credentials", "preview", "present"):
-        check("wallet-p2", "/api/v1/wallet/" + action, 404,
+        check("wallet-p2", "/api/v1/wallet/" + action, 401 if args.credential_testing else 404,
               "GET" if action == "credentials" else "POST", None if action == "credentials" else b"{}")
     for action in ("begin", "complete"):
         check("wallet-p2", "/internal/recoveries/" + action, 404, "POST", b"{}")
@@ -63,6 +64,7 @@ def main():
     args.output.write_text(json.dumps({
         "checked_at": datetime.now(timezone.utc).isoformat(),
         "transport": "loopback_verified_tls" if args.loopback else "public_verified_tls",
+        "credential_testing": args.credential_testing,
         "count": len(checks), "checks": checks,
     }, indent=2) + "\n")
     print(f"PASS: {len(checks)} ingress checks ({'loopback' if args.loopback else 'public'} verified TLS)")

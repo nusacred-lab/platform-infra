@@ -8,7 +8,9 @@ from test_p2_login import Browser, json_request
 
 p = argparse.ArgumentParser(__doc__)
 p.add_argument('--runtime', type=Path, required=True)
+p.add_argument('--public-frontend', action='store_true', help='Use approved public auth/wallet HTTPS')
 a = p.parse_args(); r = a.runtime.resolve()
+Browser.public_frontend = a.public_frontend
 owner = json.loads((r / 'recovery-fixture.json').read_text())
 other = json.loads((r / 'login-fixtures.json').read_text())['applicant']
 _, _, one = tokens(owner); _, _, two = tokens(other)
@@ -40,7 +42,8 @@ try:
     c.request('GET', '/verification-session/' + request['sessionId'] + '/info'); response = c.getresponse()
     assert response.status == 200 and json.loads(response.read())['status'] == 'SUCCESSFUL'
 finally: c.close()
-(r / 'wallet-isolation-result.json').write_text(json.dumps({'schemaVersion': 1, 'checks': [
+(r / ('wallet-isolation-public-result.json' if a.public_frontend else 'wallet-isolation-result.json')).write_text(json.dumps({'schemaVersion': 1,
+    'transport': 'public_verified_tls' if a.public_frontend else 'private_verified_tls', 'checks': [
     'Different OIDC accounts have different wallets', 'Caller-supplied wallet ID cannot select another account binding',
     'Credential reads remain owned when a foreign wallet ID is supplied', 'Foreign account cannot use owner consent',
     'Changed preview hash and declined consent cannot dispatch', 'Valid owner consent still succeeds once',

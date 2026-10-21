@@ -95,14 +95,15 @@ The native HTTPS callback is exactly
 `https://wallet-p2.demo.inoerawan.id/auth/android/callback`; debug callback remains
 `id.nusacred.wallet.debug:/oauth2redirect`. There are no wildcard redirects.
 
-The default approved public Caddy configuration still permits login, portal
+The default login-only Caddy configuration permits login, portal
 assets and the public certificate association. It denies reset/action-token/
 required-action, credential/presentation APIs, admin, account console, mailbox,
 raw protocol routes and health. Three portal BFFs are proved over private TLS;
 only the custodian login portal is currently public.
 
-`credential-testing.compose.yaml` and `credential-testing.caddy` are a **staged,
-not active** expansion for physical P2 testing. They permit the guarded Keycloak
+On 21 October 2026, the owner explicitly approved and activated
+`credential-testing.compose.yaml` and `credential-testing.caddy` for P2 testing.
+They permit the guarded Keycloak
 email/required-action paths and these five authenticated native wallet routes:
 
 - `POST /api/v1/wallet/provision`
@@ -116,7 +117,12 @@ private runtime. Public admin/account/mailbox/raw-Wallet2/health routes remain
 denied. Recovery coordination stays internal and cannot be opened by that
 allowlist. Activate this expansion with `run_p2_stack.py --public-credential-testing` only
 after explicit approval beyond the prior login-only exposure; preserve that flag
-for subsequent stack operations while the approved expansion is active, then repeat public ingress/login/ownership/recovery tests.
+for subsequent stack operations while the approved expansion is active.
+`check_p2_ingress.py --credential-testing` passed 30 checks through both public
+and loopback verified TLS. `test_p2_recovery.py --public-frontend` passed ten
+real-service checks, including old-session revocation and retained-credential
+presentation accepted by the actual verifier. These HTTP checks do not substitute
+for physical APK acceptance.
 
 A verified domain and an installed signed APK do not prove a physical QR scan or
 completed credential/recovery journey. Keep G2 open until those results are recorded.

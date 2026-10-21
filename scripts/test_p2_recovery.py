@@ -104,12 +104,14 @@ def email_reset_form(user):
 def main():
     p = argparse.ArgumentParser(__doc__)
     p.add_argument('--runtime', type=Path, required=True)
+    p.add_argument('--public-frontend', action='store_true', help='Use approved public auth/wallet HTTPS; admin and mailbox stay private')
     p.add_argument('--protocol-harness', type=Path, required=True)
     p.add_argument('--expect-lost-completion', action='store_true')
     p.add_argument('--required-action', action='store_true')
     p.add_argument('--restart-validated-flow', action='store_true')
     p.add_argument('--restart-keycloak-after-gate', action='store_true')
     a = p.parse_args(); runtime = a.runtime.resolve(); assert 'runtime' in runtime.parts
+    Browser.public_frontend = a.public_frontend
     reports = []
     def passed(message): reports.append(message); print('PASS:', message, flush=True)
     credentials = json.loads((runtime / 'credentials.json').read_text())
@@ -290,9 +292,10 @@ def main():
         pass
     passed('The old password cannot authenticate after recovery')
     report = {'schemaVersion': 1, 'time': datetime.now(timezone.utc).isoformat(), 'syntheticData': True,
+              'transport': 'public_verified_tls' if a.public_frontend else 'private_verified_tls',
               'checks': reports, 'credentialFingerprint': credential_fingerprint,
-              'limits': ['Private diagnostic HTTP/browser proof; release APK and fault/restart cases require separate evidence']}
-    (runtime / ('recovery-fault-result.json' if a.expect_lost_completion else 'recovery-required-action-result.json' if a.required_action else 'recovery-idp-interrupted-result.json' if a.restart_keycloak_after_gate else 'recovery-abandoned-result.json' if a.restart_validated_flow else 'recovery-result.json')).write_text(json.dumps(report, indent=2) + '\n')
+              'limits': ['HTTP/browser proof; release APK and fault/restart cases require separate evidence']}
+    (runtime / ('recovery-public-result.json' if a.public_frontend else 'recovery-fault-result.json' if a.expect_lost_completion else 'recovery-required-action-result.json' if a.required_action else 'recovery-idp-interrupted-result.json' if a.restart_keycloak_after_gate else 'recovery-abandoned-result.json' if a.restart_validated_flow else 'recovery-result.json')).write_text(json.dumps(report, indent=2) + '\n')
     print('PASS:', len(reports), 'real-service recovery checks')
 
 if __name__ == '__main__':
