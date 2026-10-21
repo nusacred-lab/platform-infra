@@ -37,6 +37,10 @@ https://wallet-p2.demo.inoerawan.id:8443 {
         X-Content-Type-Options nosniff
         -Server
     }
+    handle /.well-known/assetlinks.json {
+        root * /app-links
+        file_server
+    }
     @login {
         method GET HEAD POST
         path / /index.html /web-portals.js /web-portals.js.map /*.wasm /composeResources/* /auth/native/start /auth/native/session /auth/start /auth/callback /auth/account /auth/me /auth/logout

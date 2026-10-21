@@ -1,0 +1,23 @@
+# Optional disposable fault test: complete acknowledgements are dropped, begin still reaches the registry.
+services:
+  keycloak:
+    environment:
+      RECOVERY_COORDINATOR_ORIGIN: http://recovery-fault:8080
+  recovery-fault:
+    image: ${P2_EDGE_IMAGE:?Use the scanned Caddy image}
+    command: [caddy, run, --config, /etc/caddy/Caddyfile, --adapter, caddyfile]
+    volumes: ["./recovery-fault.caddy:/etc/caddy/Caddyfile:ro,Z"]
+    networks: [recovery]
+    read_only: true
+    tmpfs: ["/tmp:rw,noexec,nosuid,size=16m"]
+    environment:
+      XDG_CONFIG_HOME: /tmp/config
+      XDG_DATA_HOME: /tmp/data
+    cap_drop: [ALL]
+    security_opt: [no-new-privileges:true]
+    mem_limit: 64m
+    pids_limit: 64
+    restart: "no"
+    logging:
+      driver: json-file
+      options: {max-size: 5m, max-file: "2"}

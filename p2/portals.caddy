@@ -1,0 +1,18 @@
+https://issuer-p2.demo.inoerawan.id:8443 {
+    tls /tls/fullchain.pem /tls/privkey.pem
+    header {
+        Cache-Control no-store
+        X-Content-Type-Options nosniff
+        Referrer-Policy no-referrer
+    }
+    reverse_proxy issuer-backend:8080
+}
+https://verifier-p2.demo.inoerawan.id:8443 {
+    tls /tls/fullchain.pem /tls/privkey.pem
+    header {
+        Cache-Control no-store
+        X-Content-Type-Options nosniff
+        Referrer-Policy no-referrer
+    }
+    reverse_proxy company-backend:8080
+}

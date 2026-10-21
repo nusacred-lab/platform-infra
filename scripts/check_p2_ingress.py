@@ -50,6 +50,12 @@ def main():
     check("wallet-p2", "/", 200)
     check("wallet-p2", "/auth/native/start", 200, "POST", b"{}")
     check("wallet-p2", "/auth/me", 401)
+    check("wallet-p2", "/.well-known/assetlinks.json", 200)
+    for action in ("provision", "reconcile", "credentials", "preview", "present"):
+        check("wallet-p2", "/api/v1/wallet/" + action, 404,
+              "GET" if action == "credentials" else "POST", None if action == "credentials" else b"{}")
+    for action in ("begin", "complete"):
+        check("wallet-p2", "/internal/recoveries/" + action, 404, "POST", b"{}")
     for path in ("/health/live", "/wallets", "/credentials", "/recoveries", "/admin/", "/api/v1/messages"):
         check("wallet-p2", path, 404)
     for host in ("issuer", "wallet", "auth", "verifier"):

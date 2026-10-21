@@ -1,0 +1,15 @@
+{
+    admin off
+    auto_https off
+}
+http://:8080 {
+    handle /internal/recoveries/complete {
+        respond "Acknowledgement unavailable" 503
+    }
+    handle /internal/recoveries/begin {
+        reverse_proxy custodian:8080
+    }
+    handle {
+        respond "Not found" 404
+    }
+}

@@ -30,3 +30,10 @@ and loopback-only diagnostics on independent networks and persistent volumes.
 See [P2 identity proof](docs/P2-identity-proof.md) for pinned image/source builds,
 security checks, restart evidence, reproduction and remaining recovery work.
 G2 and public application ingress remain open gates.
+
+Current P2 work includes a persistent custodian recovery registry, guarded
+Keycloak password changes, private role-separated portal BFFs and isolated
+source-built protocol services. See [P2 recovery operations](docs/P2-recovery-proof.md).
+Public login and the signed Android certificate association are active. The
+credential/recovery public override is staged and requires separate approval;
+physical acceptance and G2 remain open.

@@ -1,0 +1,65 @@
+# Isolated source-built P2 protocol services. Host ports are loopback diagnostics only.
+x-walt: &walt
+  read_only: true
+  cap_drop: [ALL]
+  security_opt: [no-new-privileges:true]
+  mem_limit: 2g
+  cpus: 1.0
+  pids_limit: 512
+  restart: "no"
+  environment:
+    JAVA_TOOL_OPTIONS: -Xms64m -Xmx768m -XX:ActiveProcessorCount=2
+  logging:
+    driver: json-file
+    options: {max-size: 5m, max-file: "2"}
+services:
+  issuer:
+    <<: *walt
+    image: ${P2_WALT_ISSUER_IMAGE:?Use the scanned source-built issuer}
+    volumes: ["${P2_WALT_RUNTIME:?}/walt/issuer:/waltid-issuer-api2/config:ro,Z"]
+    networks: [protocol]
+    tmpfs: ["/tmp:rw,noexec,nosuid,nodev,size=256m"]
+  wallet:
+    <<: *walt
+    image: ${P2_WALT_WALLET_IMAGE:?Use the scanned source-built wallet}
+    volumes:
+      - ${P2_WALT_RUNTIME:?}/walt/wallet:/waltid-wallet-api2/config:ro,Z
+      - ${P2_WALT_RUNTIME:?}/data:/data:Z
+    networks: [protocol, wallet-backend]
+    # Baseline-tested SQLite extraction requires executable tmp; no other service gets it.
+    tmpfs: ["/tmp:rw,exec,nosuid,nodev,size=256m"]
+  verifier:
+    <<: *walt
+    image: ${P2_WALT_VERIFIER_IMAGE:?Use the scanned source-built verifier}
+    volumes: ["${P2_WALT_RUNTIME:?}/walt/verifier:/waltid-verifier-api2/config:ro,Z"]
+    networks: [protocol]
+    tmpfs: ["/tmp:rw,noexec,nosuid,nodev,size=256m"]
+  custodian:
+    environment:
+      WALLET_ORIGIN: http://wallet:7006
+    networks: [application, recovery, wallet-backend]
+  protocol-access:
+    image: ${P2_EDGE_IMAGE:?Use the scanned Caddy image}
+    command: [caddy, run, --config, /etc/caddy/Caddyfile, --adapter, caddyfile]
+    user: "${LOCAL_UID:-1000}:${LOCAL_GID:-1000}"
+    volumes: ["./protocol.caddy:/etc/caddy/Caddyfile:ro,Z"]
+    networks: [diagnostics, protocol]
+    ports: ["127.0.0.1:17005:7005", "127.0.0.1:17006:7006", "127.0.0.1:17004:7004"]
+    read_only: true
+    tmpfs: ["/tmp:rw,noexec,nosuid,size=16m"]
+    cap_drop: [ALL]
+    security_opt: [no-new-privileges:true]
+    environment:
+      XDG_CONFIG_HOME: /tmp/config
+      XDG_DATA_HOME: /tmp/data
+    mem_limit: 64m
+    pids_limit: 64
+    restart: "no"
+    logging:
+      driver: json-file
+      options: {max-size: 5m, max-file: "2"}
+networks:
+  protocol:
+    internal: true
+  wallet-backend:
+    internal: true

@@ -51,7 +51,8 @@
       "implicitFlowEnabled": false,
       "serviceAccountsEnabled": false,
       "redirectUris": [
-        "id.nusacred.wallet.debug:/oauth2redirect"
+        "id.nusacred.wallet.debug:/oauth2redirect",
+        "https://wallet-p2.demo.inoerawan.id/auth/android/callback"
       ],
       "webOrigins": [],
       "attributes": {
@@ -98,6 +99,20 @@
         "profile",
         "email",
         "roles"
+      ],
+      "protocolMappers": [
+        {
+          "name": "bff-api-audience",
+          "protocol": "openid-connect",
+          "protocolMapper": "oidc-audience-mapper",
+          "consentRequired": false,
+          "config": {
+            "included.client.audience": "issuer-bff-p2",
+            "id.token.claim": "false",
+            "access.token.claim": "true",
+            "introspection.token.claim": "true"
+          }
+        }
       ]
     },
     {
@@ -156,6 +171,20 @@
         "profile",
         "email",
         "roles"
+      ],
+      "protocolMappers": [
+        {
+          "name": "bff-api-audience",
+          "protocol": "openid-connect",
+          "protocolMapper": "oidc-audience-mapper",
+          "consentRequired": false,
+          "config": {
+            "included.client.audience": "company-bff-p2",
+            "id.token.claim": "false",
+            "access.token.claim": "true",
+            "introspection.token.claim": "true"
+          }
+        }
       ]
     }
   ]

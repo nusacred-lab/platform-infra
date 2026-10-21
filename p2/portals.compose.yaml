@@ -1,0 +1,44 @@
+# Private diagnostic BFFs. No public host/tunnel routes are added here.
+x-portal: &portal
+  image: ${P2_CUSTODIAN_IMAGE:?Use the scanned immutable application image}
+  networks: [application]
+  read_only: true
+  tmpfs: ["/tmp:rw,noexec,nosuid,size=32m"]
+  cap_drop: [ALL]
+  security_opt: [no-new-privileges:true]
+  mem_limit: 384m
+  cpus: 0.5
+  pids_limit: 128
+  restart: "no"
+  logging:
+    driver: json-file
+    options: {max-size: 5m, max-file: "2"}
+services:
+  issuer-backend:
+    <<: *portal
+    environment:
+      JAVA_TOOL_OPTIONS: -Xms32m -Xmx192m -XX:ActiveProcessorCount=2
+      OIDC_ISSUER: https://auth-p2.demo.inoerawan.id/realms/competency-proof-p2
+      OIDC_BACKCHANNEL_ORIGIN: https://auth-p2.demo.inoerawan.id:8443
+      OIDC_PORTAL_ORIGIN: https://issuer-p2.demo.inoerawan.id
+      OIDC_CLIENT_ID: issuer-bff-p2
+      OIDC_CLIENT_SECRET_FILE: /run/secrets/issuer-client-secret
+    secrets: [issuer-client-secret]
+  company-backend:
+    <<: *portal
+    environment:
+      JAVA_TOOL_OPTIONS: -Xms32m -Xmx192m -XX:ActiveProcessorCount=2
+      OIDC_ISSUER: https://auth-p2.demo.inoerawan.id/realms/competency-proof-p2
+      OIDC_BACKCHANNEL_ORIGIN: https://auth-p2.demo.inoerawan.id:8443
+      OIDC_PORTAL_ORIGIN: https://verifier-p2.demo.inoerawan.id
+      OIDC_CLIENT_ID: company-bff-p2
+      OIDC_CLIENT_SECRET_FILE: /run/secrets/company-client-secret
+    secrets: [company-client-secret]
+  access:
+    volumes:
+      - ./portals.caddy:/etc/caddy/optional/portals.caddy:ro,Z
+secrets:
+  issuer-client-secret:
+    file: ${P2_RUNTIME:?}/issuer-client-secret
+  company-client-secret:
+    file: ${P2_RUNTIME:?}/company-client-secret

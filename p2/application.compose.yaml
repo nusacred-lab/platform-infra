@@ -25,6 +25,7 @@ services:
     ports: ["127.0.0.1:18080:8080"]
     volumes:
       - ./application.caddy:/etc/caddy/optional/application.caddy:ro,Z
+      - ./assetlinks.json:/app-links/.well-known/assetlinks.json:ro,Z
     networks:
       identity: {}
       diagnostics: {}

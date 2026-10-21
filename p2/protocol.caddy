@@ -1,0 +1,14 @@
+{
+    admin off
+    auto_https off
+}
+# These listeners are published only on host loopback by walt.compose.yaml.
+http://:7005 {
+    reverse_proxy issuer:7005
+}
+http://:7006 {
+    reverse_proxy wallet:7006
+}
+http://:7004 {
+    reverse_proxy verifier:7004
+}

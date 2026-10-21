@@ -27,6 +27,10 @@ status, _, scopes = request("GET", base + "/client-scopes", token=token)
 assert status == 200
 basic = next(scope for scope in scopes if scope["name"] == "basic")
 expected = json.loads((Path(__file__).resolve().parents[1] / "p2/realm-template.json").read_text())
+native_expected = next(c for c in expected["clients"] if c["clientId"] == "android-wallet-p2")
+native_actual = next(c for c in clients if c["clientId"] == "android-wallet-p2")
+native_actual["redirectUris"] = native_expected["redirectUris"]
+assert request("PUT", base + "/clients/" + native_actual["id"], native_actual, token=token)[0] == 204
 for client in expected["clients"]:
     if not client.get("protocolMappers"):
         continue
@@ -49,6 +53,9 @@ else:
                 for role in ("applicant", "custodian-admin")}
     fixture_path.write_text(json.dumps(fixtures, indent=2))
     fixture_path.chmod(0o600)
+for role in ("applicant", "custodian-admin", "issuer-admin", "company-admin"):
+    if role not in fixtures:
+        fixtures[role] = {"email": f"p2-{role}-{secrets.token_hex(6)}@example.test", "password": secrets.token_urlsafe(24)}
 for role, user in fixtures.items():
     status, _, found = request("GET", base + "/users?" + urlencode({"username": user["email"], "exact": "true"}), token=token)
     assert status == 200
@@ -66,5 +73,5 @@ for role, user in fixtures.items():
     assert status == 204
 fixture_path.write_text(json.dumps(fixtures, indent=2))
 fixture_path.chmod(0o600)
-print("PASS: exact audience mappers applied and two private synthetic role fixtures prepared.")
+print("PASS: exact audience mappers applied and four private synthetic role fixtures prepared.")
 print("Fixtures are preverified for login tests; this is not evidence of email-link verification.")

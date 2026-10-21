@@ -45,6 +45,7 @@ def main():
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--runtime", required=True, type=Path)
     parser.add_argument("--check-restart", action="store_true")
+    parser.add_argument("--recovery-enabled", action="store_true", help="Verify the guarded private recovery configuration")
     args = parser.parse_args()
     runtime = args.runtime.resolve()
     credentials = json.loads((runtime / "credentials.json").read_text())
@@ -72,13 +73,14 @@ def main():
     base = f"/admin/realms/{REALM}"
     status, _, realm = request("GET", base, token=token)
     assert status == 200 and realm["verifyEmail"] and not realm["registrationAllowed"]
-    assert not realm["resetPasswordAllowed"]  # Gate provider is not implemented yet.
+    assert realm["resetPasswordAllowed"] == args.recovery_enabled
     status, _, clients = request("GET", base + "/clients", token=token)
     assert status == 200
     clients = {client["clientId"]: client for client in clients}
     native = clients["android-wallet-p2"]
     assert native["publicClient"] and not native.get("secret")
-    assert native["redirectUris"] == ["id.nusacred.wallet.debug:/oauth2redirect"]
+    assert set(native["redirectUris"]) == {"id.nusacred.wallet.debug:/oauth2redirect",
+        "https://wallet-p2.demo.inoerawan.id/auth/android/callback"}
     for client_id in ("android-wallet-p2", "issuer-bff-p2", "custodian-bff-p2", "company-bff-p2"):
         client = clients[client_id]
         assert client["attributes"]["pkce.code.challenge.method"] == "S256"

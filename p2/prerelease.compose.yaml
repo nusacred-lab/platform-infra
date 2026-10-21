@@ -8,6 +8,7 @@ services:
     user: "${LOCAL_UID:-1000}:${LOCAL_GID:-1000}"
     volumes:
       - ./prerelease.caddy:/etc/caddy/Caddyfile:ro,Z
+      - ./assetlinks.json:/app-links/.well-known/assetlinks.json:ro,Z
       - ${P2_RUNTIME:?}/tls:/tls:ro,z
     networks: [auth-edge, application, frontend]
     environment:

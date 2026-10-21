@@ -1,0 +1,5 @@
+# Compile the provider against this exact scanned base before building this image.
+ARG KEYCLOAK_IMAGE
+FROM ${KEYCLOAK_IMAGE}
+COPY --chown=1000:0 nusacred-recovery-provider.jar /opt/keycloak/providers/nusacred-recovery-provider.jar
+RUN /opt/keycloak/bin/kc.sh build --db=postgres --health-enabled=true --cache=local

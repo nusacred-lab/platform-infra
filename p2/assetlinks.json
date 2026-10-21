@@ -1,0 +1,14 @@
+[
+  {
+    "relation": [
+      "delegate_permission/common.handle_all_urls"
+    ],
+    "target": {
+      "namespace": "android_app",
+      "package_name": "id.nusacred.wallet",
+      "sha256_cert_fingerprints": [
+        "63:88:84:CC:B7:AC:19:4D:5E:B1:25:09:41:0E:1E:77:9E:B7:3A:84:F9:38:E1:B5:81:10:4D:7B:E2:05:DA:58"
+      ]
+    }
+  }
+]

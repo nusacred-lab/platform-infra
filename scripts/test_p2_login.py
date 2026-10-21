@@ -29,7 +29,8 @@ class Browser:
 
     def request(self, url, method="GET", body=None, headers=None, form=False):
         uri = urlsplit(url)
-        assert uri.scheme == "https" and uri.netloc in (urlsplit(AUTH).netloc, urlsplit(WALLET).netloc)
+        assert uri.scheme == "https" and uri.netloc in (urlsplit(AUTH).netloc, urlsplit(WALLET).netloc,
+            "issuer-p2.demo.inoerawan.id", "verifier-p2.demo.inoerawan.id")
         conn = http.client.HTTPSConnection(uri.hostname, timeout=15)
         def connect():
             conn.sock = ssl.create_default_context().wrap_socket(
@@ -258,7 +259,7 @@ def main():
               "checks": results,
               "limits": ["Synthetic fixtures were preverified, not email-link verified",
                          "HTTP PKCE exercises the backend contract, not physical APK browser completion",
-                         "Persistent recovery registry and credential access are not implemented"]}
+                         "Private recovery and credential proof require separate reports; public credential/recovery routing remains disabled"]}
     filename = "oidc-public-login-result.json" if args.public_frontend else "oidc-login-result.json"
     (runtime / filename).write_text(json.dumps(report, indent=2) + "\n")
     print("PASS:", len(results), "real-service login/rejection checks")
