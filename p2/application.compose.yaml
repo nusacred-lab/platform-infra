@@ -5,6 +5,11 @@ services:
     networks: [application]
     environment:
       JAVA_TOOL_OPTIONS: -Xms32m -Xmx192m -XX:ActiveProcessorCount=2
+      OIDC_ISSUER: https://auth-p2.demo.inoerawan.id/realms/competency-proof-p2
+      OIDC_BACKCHANNEL_ORIGIN: https://auth-p2.demo.inoerawan.id:8443
+      OIDC_PORTAL_ORIGIN: https://wallet-p2.demo.inoerawan.id
+      OIDC_CLIENT_SECRET_FILE: /run/secrets/custodian-client-secret
+    secrets: [custodian-client-secret]
     read_only: true
     tmpfs: ["/tmp:rw,noexec,nosuid,size=32m"]
     cap_drop: [ALL]
@@ -20,7 +25,14 @@ services:
     ports: ["127.0.0.1:18080:8080"]
     volumes:
       - ./application.caddy:/etc/caddy/optional/application.caddy:ro,Z
-    networks: [identity, diagnostics, application]
+    networks:
+      identity: {}
+      diagnostics: {}
+      application:
+        aliases: [auth-p2.demo.inoerawan.id]
 networks:
   application:
     internal: true
+secrets:
+  custodian-client-secret:
+    file: ${P2_RUNTIME:?}/custodian-client-secret

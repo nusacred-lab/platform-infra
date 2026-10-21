@@ -1,0 +1,5 @@
+# Apply with local-demo/compose.yaml only after prerelease ingress approval.
+services:
+  edge:
+    volumes:
+      - ./p2-routes.caddy:/etc/caddy/optional/p2-routes.caddy:ro,Z

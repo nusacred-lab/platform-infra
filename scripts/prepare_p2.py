@@ -46,6 +46,8 @@ def main():
         target.chmod(0o644)
     (runtime / "postgres-password").write_text(state["database"])
     (runtime / "postgres-password").chmod(0o644)
+    (runtime / "custodian-client-secret").write_text(state["bff"]["custodian"])
+    (runtime / "custodian-client-secret").chmod(0o644)
     images = json.loads((root / "p2/images.json").read_text())
     env = {
         "P2_RUNTIME": str(runtime), "P2_DB_PASSWORD": state["database"],

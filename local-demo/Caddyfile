@@ -23,3 +23,6 @@ https://issuer.demo.inoerawan.id:8443, https://wallet.demo.inoerawan.id:8443, ht
 	respond @probe "Competency Proof: TLS connectivity probe. Application services are not enabled." 200
 	respond "Not found" 404
 }
+
+# No routes are imported unless the prerelease override is explicitly mounted.
+import /etc/caddy/optional/*.caddy

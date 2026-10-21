@@ -1,0 +1,19 @@
+# The original four probe hostnames retain their existing routes.
+https://auth-p2.demo.inoerawan.id:8443 {
+    tls /certificates/fullchain.pem /certificates/privkey.pem
+    reverse_proxy https://p2-ingress:8443 {
+        header_up Host auth-p2.demo.inoerawan.id
+        transport http {
+            tls_server_name auth-p2.demo.inoerawan.id
+        }
+    }
+}
+https://wallet-p2.demo.inoerawan.id:8443 {
+    tls /certificates/fullchain.pem /certificates/privkey.pem
+    reverse_proxy https://p2-ingress:8443 {
+        header_up Host wallet-p2.demo.inoerawan.id
+        transport http {
+            tls_server_name wallet-p2.demo.inoerawan.id
+        }
+    }
+}
