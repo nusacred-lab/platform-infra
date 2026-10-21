@@ -29,11 +29,12 @@ The P2 branch adds production-mode Keycloak/PostgreSQL, private synthetic SMTP,
 and loopback-only diagnostics on independent networks and persistent volumes.
 See [P2 identity proof](docs/P2-identity-proof.md) for pinned image/source builds,
 security checks, restart evidence, reproduction and remaining recovery work.
-G2 remains open pending complete physical acceptance.
+P2/G2 passed for the synthetic prerelease on 22 October 2026.
 
 Current P2 work includes a persistent custodian recovery registry, guarded
 Keycloak password changes, private role-separated portal BFFs and isolated
 source-built protocol services. See [P2 recovery operations](docs/P2-recovery-proof.md).
 Public login and the signed Android certificate association are active. The
 credential/recovery public override was explicitly approved and is active;
-physical acceptance and G2 remain open.
+physical scan, recovery, fresh-install presentation and bounded-session tests
+passed. Production and operations gates remain separate.

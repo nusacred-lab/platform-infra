@@ -125,14 +125,16 @@ presentation accepted by the actual verifier. These HTTP checks do not substitut
 for physical APK acceptance.
 
 A verified domain and an installed signed APK do not prove a physical QR scan or
-completed credential/recovery journey. Keep G2 open until those results are recorded.
+completed credential/recovery journey. Those results are now recorded: G2 passed for the synthetic P2 prerelease on
+22 October 2026; later production and operations gates remain separate.
 
 
 Physical phone evidence now also covers synthetic email recovery, rejection of the
 old native session, actual candidate uninstall/reinstall, fresh HTTPS callback
 login and presentation of the byte-identical retained credential (`SUCCESSFUL`).
 An actual Chrome button opens the signed APK's verified HTTPS request without
-sending automatically. Optical camera scanning remains a separate pending check.
+sending automatically. Optical camera scanning and human-completed presentation subsequently passed,
+with the exact matching browser/QR verifier session returning `SUCCESSFUL`.
 
 
 Same-second fresh authentication uses registry schema 2: a server-issued,
@@ -160,3 +162,14 @@ and the recovery registry continue to revoke access immediately. The APK display
 expiry without interrupting the camera and retains only unexpired request context.
 `test_p2_recovery_anonymous.py` compares the actual public feedback for known and
 unknown synthetic users and verifies existing wallet access stays open.
+
+
+Final physical timeout tests passed on the signed candidate: a temporary 30-second
+session expired without closing the camera or dropping an unexpired request;
+expired access was denied. A finally block restored the canonical 900 seconds.
+Normal login/presentation passed, an invalid request kept a valid session, and
+actual Activity recreation preserved the newest context over its old launch
+Intent. The prior device rotation policy was restored. The human then scanned
+the fresh QR, confirmed recognition, and completed presentation; the supported
+optical event and exact verifier session both corroborated success. P2/G2 is
+complete for this synthetic prerelease scope, without production promotion.
