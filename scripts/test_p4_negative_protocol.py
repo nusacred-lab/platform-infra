@@ -46,12 +46,12 @@ def main():
     key = ec.generate_private_key(ec.SECP256R1())
     pub = key.public_key().public_numbers()
     jwk = dict(kty='EC', crv='P-256', x=enc(pub.x.to_bytes(32, 'big')), y=enc(pub.y.to_bytes(32, 'big')))
-    def jwt(payload, typ, with_key=False):
+    def jwt(payload, typ, with_key=False, signing_key=None):
         header = dict(alg='ES256', typ=typ)
         if with_key:
             header['jwk'] = jwk
         message = enc(json.dumps(header, separators=(',', ':')).encode())+'.'+enc(json.dumps(payload, separators=(',', ':')).encode())
-        r, s = decode_dss_signature(key.sign(message.encode(), ec.ECDSA(hashes.SHA256())))
+        r, s = decode_dss_signature((signing_key or key).sign(message.encode(), ec.ECDSA(hashes.SHA256())))
         return message+'.'+enc(r.to_bytes(32, 'big')+s.to_bytes(32, 'big'))
     def issue(overrides, wrong_type=False):
         status, offer = call('issuer', '/issuer2/credential-offers', {'profileId': 'competencyWrongTypeFixture' if wrong_type else 'competencyNegativeFixture', 'authMethod': 'PRE_AUTHORIZED', 'runtimeOverrides': overrides})
@@ -122,7 +122,7 @@ def main():
         if mutation == 'freshness': payload['iat'] = 1
         if mutation == 'hash': payload['sd_hash'] = 'wrong'
         kb = jwt(payload, 'kb+jwt')
-        if mutation == 'binding': kb = kb[:-20]+('A' if kb[-20] != 'A' else 'B')+kb[-19:]
+        if mutation == 'binding': kb = jwt(payload, 'kb+jwt', signing_key=ec.generate_private_key(ec.SECP256R1()))
         if mutation == 'tamper': prefix = prefix[:50]+('A' if prefix[50] != 'A' else 'B')+prefix[51:]
         status, _ = call('verifier', urllib.parse.urlsplit(request['response_uri']).path,
                          {'vp_token': json.dumps({'competency': [prefix+kb]}), 'state': request['state']}, form=True)
