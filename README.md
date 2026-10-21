@@ -22,3 +22,11 @@ reviews dependency changes. See SECURITY-PROJECT.md for control and review limit
 Project code: Apache-2.0 (LICENSE).
 
 All repository work must use English; see [AGENTS.md](AGENTS.md).
+
+## Private P2 identity proof
+
+The P2 branch adds production-mode Keycloak/PostgreSQL, private synthetic SMTP,
+and loopback-only diagnostics on independent networks and persistent volumes.
+See [P2 identity proof](docs/P2-identity-proof.md) for pinned image/source builds,
+security checks, restart evidence, reproduction and remaining recovery work.
+G2 and public application ingress remain open gates.

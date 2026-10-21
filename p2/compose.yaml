@@ -1,0 +1,107 @@
+name: competency-proof-p2
+services:
+  postgres:
+    image: ${P2_POSTGRES_IMAGE:?Set the scanned PostgreSQL runtime image}
+    environment:
+      POSTGRES_DB: keycloak_p2
+      POSTGRES_USER: keycloak_p2
+      POSTGRES_PASSWORD_FILE: /run/secrets/postgres-password
+    secrets: [postgres-password]
+    volumes: [postgres-data:/var/lib/postgresql]
+    networks: [identity]
+    healthcheck:
+      test: [CMD-SHELL, "pg_isready -U keycloak_p2 -d keycloak_p2"]
+      interval: 5s
+      timeout: 3s
+      retries: 30
+    mem_limit: 384m
+    cpus: 0.5
+    pids_limit: 128
+    security_opt: [no-new-privileges:true]
+    restart: "no"
+    logging: &logging
+      driver: json-file
+      options: {max-size: 5m, max-file: "2"}
+  mail:
+    image: ${P2_MAILPIT_IMAGE:?Set the scanned SMTP runtime image}
+    environment:
+      MP_DATABASE: /data/mailpit.db
+      MP_MAX_MESSAGES: "100"
+      MP_DISABLE_VERSION_CHECK: "true"
+      MP_SMTP_ALLOWED_RECIPIENTS: '@example\.test$$'
+    volumes: [mail-data:/data]
+    networks: [identity]
+    read_only: true
+    tmpfs: ["/tmp:rw,noexec,nosuid,size=16m"]
+    cap_drop: [ALL]
+    security_opt: [no-new-privileges:true]
+    mem_limit: 128m
+    cpus: 0.5
+    pids_limit: 64
+    restart: "no"
+    logging: *logging
+  keycloak:
+    image: ${P2_KEYCLOAK_IMAGE:?Set the scanned Keycloak runtime image}
+    build:
+      context: .
+      dockerfile: Containerfile.keycloak
+      args: {KEYCLOAK_IMAGE: "${KEYCLOAK_IMAGE:?Set the pinned Keycloak image}"}
+    command: [start, --optimized, --import-realm]
+    environment:
+      KC_HOSTNAME: https://auth-p2.demo.inoerawan.id
+      KC_HOSTNAME_STRICT: "true"
+      KC_HTTP_ENABLED: "false"
+      KC_HTTPS_CERTIFICATE_FILE: /tls/fullchain.pem
+      KC_HTTPS_CERTIFICATE_KEY_FILE: /tls/privkey.pem
+      KC_DB_URL: jdbc:postgresql://postgres:5432/keycloak_p2
+      KC_DB_USERNAME: keycloak_p2
+      KC_DB_PASSWORD: ${P2_DB_PASSWORD:?Prepare private credentials}
+      KC_BOOTSTRAP_ADMIN_USERNAME: p2-bootstrap
+      KC_BOOTSTRAP_ADMIN_PASSWORD: ${P2_BOOTSTRAP_PASSWORD:?Prepare private credentials}
+      KC_HEALTH_ENABLED: "true"
+      KC_CACHE: local
+      JAVA_OPTS_KC_HEAP: -Xms128m -Xmx512m
+    depends_on:
+      postgres: {condition: service_healthy}
+    volumes:
+      - ${P2_RUNTIME:?}/tls:/tls:ro,z
+      - ${P2_RUNTIME:?}/import:/opt/keycloak/data/import:ro,Z
+    networks: [identity]
+    tmpfs: ["/tmp:rw,noexec,nosuid,size=64m"]
+    cap_drop: [ALL]
+    security_opt: [no-new-privileges:true]
+    mem_limit: 896m
+    cpus: 1.0
+    pids_limit: 256
+    restart: "no"
+    logging: *logging
+  access:
+    image: ${P2_EDGE_IMAGE:?Set the scanned local Caddy image}
+    command: [caddy, run, --config, /etc/caddy/Caddyfile, --adapter, caddyfile]
+    ports: ["127.0.0.1:18443:8443", "127.0.0.1:18025:8025"]
+    volumes:
+      - ./Caddyfile:/etc/caddy/Caddyfile:ro,Z
+      - ${P2_RUNTIME:?}/tls:/tls:ro,z
+    networks: [identity, diagnostics]
+    environment:
+      XDG_CONFIG_HOME: /tmp/config
+      XDG_DATA_HOME: /tmp/data
+    read_only: true
+    tmpfs: ["/tmp:rw,noexec,nosuid,size=16m"]
+    cap_drop: [ALL]
+    security_opt: [no-new-privileges:true]
+    mem_limit: 128m
+    pids_limit: 64
+    restart: "no"
+    logging: *logging
+networks:
+  diagnostics:
+    driver: bridge
+  identity:
+    internal: true
+volumes:
+  postgres-data:
+  mail-data:
+secrets:
+  postgres-password:
+    file: ${P2_RUNTIME:?}/postgres-password

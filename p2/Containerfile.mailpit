@@ -1,0 +1,7 @@
+FROM golang:1.27.3-alpine@sha256:f2c872bcee949b7be9c490efd02b48a8a2fbf947cdf533f1c58525ec9d8170fd AS builder
+WORKDIR /source
+# Context: checksum-verified source archive with the locked frontend already built.
+COPY . .
+RUN GOTOOLCHAIN=local go mod verify && CGO_ENABLED=0 GOTOOLCHAIN=local go build -trimpath -ldflags="-s -w -X github.com/axllent/mailpit/config.Version=1.31.5-nusacred-go1.27.3" -o /mailpit
+FROM axllent/mailpit:v1.31.5@sha256:94f6b70c1436defae6799d9ac7ff0eeff9540465b842026d5cdb018f1c0234ea
+COPY --from=builder /mailpit /mailpit

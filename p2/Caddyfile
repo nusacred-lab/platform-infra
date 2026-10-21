@@ -1,0 +1,17 @@
+{
+    admin off
+    auto_https off
+}
+https://auth-p2.demo.inoerawan.id:8443 {
+    tls /tls/fullchain.pem /tls/privkey.pem
+    header Cache-Control no-store
+    reverse_proxy https://keycloak:8443 {
+        header_up Host auth-p2.demo.inoerawan.id
+        transport http {
+            tls_server_name auth-p2.demo.inoerawan.id
+        }
+    }
+}
+http://:8025 {
+    reverse_proxy mail:8025
+}
