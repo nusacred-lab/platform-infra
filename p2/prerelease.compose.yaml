@@ -1,0 +1,32 @@
+# Apply only after the reviewed prerelease login ingress is approved.
+services:
+  keycloak:
+    networks: [identity, auth-edge]
+  p2-ingress:
+    image: ${P2_EDGE_IMAGE:?Use the scanned immutable Caddy image}
+    command: [caddy, run, --config, /etc/caddy/Caddyfile, --adapter, caddyfile]
+    user: "${LOCAL_UID:-1000}:${LOCAL_GID:-1000}"
+    volumes:
+      - ./prerelease.caddy:/etc/caddy/Caddyfile:ro,Z
+      - ./assetlinks.json:/app-links/.well-known/assetlinks.json:ro,Z
+      - ${P2_RUNTIME:?}/tls:/tls:ro,z
+    networks: [auth-edge, application, frontend]
+    environment:
+      XDG_CONFIG_HOME: /tmp/config
+      XDG_DATA_HOME: /tmp/data
+    read_only: true
+    tmpfs: ["/tmp:rw,noexec,nosuid,size=16m"]
+    cap_drop: [ALL]
+    security_opt: [no-new-privileges:true]
+    mem_limit: 128m
+    pids_limit: 64
+    restart: "no"
+    logging:
+      driver: json-file
+      options: {max-size: 5m, max-file: "2"}
+networks:
+  auth-edge:
+    internal: true
+  frontend:
+    external: true
+    name: competency-proof-local-edge_edge

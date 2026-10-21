@@ -1,0 +1,5 @@
+ARG POSTGRES_IMAGE
+FROM ${POSTGRES_IMAGE}
+# Run directly as postgres. Retire the unused root-to-user Go helper and its runtime.
+RUN rm /usr/local/bin/gosu
+USER postgres

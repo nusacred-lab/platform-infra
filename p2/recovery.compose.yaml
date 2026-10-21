@@ -1,0 +1,25 @@
+# Private P2 integration only. Merge after the base, application and prerelease overrides.
+# This does not add recovery or credential routes to the public ingress.
+services:
+  custodian:
+    environment:
+      ACCESS_REGISTRY_PATH: /data/access.db
+      RECOVERY_SECRET_FILE: /run/secrets/recovery-service-secret
+    secrets: [recovery-service-secret]
+    volumes: [custodian-access:/data]
+    networks: [application, recovery]
+  keycloak:
+    environment:
+      RECOVERY_COORDINATOR_ORIGIN: http://custodian:8080
+      RECOVERY_ISSUER: https://auth-p2.demo.inoerawan.id/realms/competency-proof-p2
+      RECOVERY_SECRET_FILE: /run/secrets/recovery-service-secret
+    secrets: [recovery-service-secret]
+    networks: [identity, auth-edge, recovery]
+networks:
+  recovery:
+    internal: true
+volumes:
+  custodian-access:
+secrets:
+  recovery-service-secret:
+    file: ${P2_RUNTIME:?}/recovery-service-secret

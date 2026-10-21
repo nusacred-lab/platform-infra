@@ -1,0 +1,32 @@
+http://:8080 {
+    header {
+        Cache-Control no-store
+        X-Content-Type-Options nosniff
+        Referrer-Policy no-referrer
+    }
+    reverse_proxy custodian:8080
+}
+
+# Prerelease origin, still reachable only through the private diagnostic proxy.
+https://wallet-p2.demo.inoerawan.id:8443 {
+    tls /tls/fullchain.pem /tls/privkey.pem
+    header {
+        Cache-Control no-store
+        X-Content-Type-Options nosniff
+        Referrer-Policy no-referrer
+    }
+    handle /.well-known/assetlinks.json {
+        root * /app-links
+        file_server
+    }
+    @application {
+        method GET HEAD POST
+        path / /index.html /web-portals.js /web-portals.js.map /*.wasm /composeResources/* /auth/native/start /auth/native/session /auth/start /auth/callback /auth/account /auth/me /auth/logout /api/v1/wallet/provision /api/v1/wallet/reconcile /api/v1/wallet/credentials /api/v1/wallet/preview /api/v1/wallet/present
+    }
+    handle @application {
+        reverse_proxy custodian:8080
+    }
+    handle {
+        respond "Not found" 404
+    }
+}

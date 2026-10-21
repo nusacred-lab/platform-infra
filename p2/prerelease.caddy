@@ -1,0 +1,54 @@
+{
+    admin off
+    auto_https off
+    servers {
+        protocols h1 h2
+    }
+}
+https://auth-p2.demo.inoerawan.id:8443 {
+    tls /tls/fullchain.pem /tls/privkey.pem
+    header {
+        Cache-Control no-store
+        Referrer-Policy no-referrer
+        X-Content-Type-Options nosniff
+        -Server
+    }
+    @login {
+        method GET HEAD POST
+        path /realms/competency-proof-p2/.well-known/openid-configuration /realms/competency-proof-p2/protocol/openid-connect/auth /realms/competency-proof-p2/protocol/openid-connect/token /realms/competency-proof-p2/protocol/openid-connect/certs /realms/competency-proof-p2/login-actions/authenticate /realms/competency-proof-p2/login-actions/restart /resources/*
+    }
+    handle @login {
+        reverse_proxy https://keycloak:8443 {
+            header_up Host auth-p2.demo.inoerawan.id
+            transport http {
+                tls_server_name auth-p2.demo.inoerawan.id
+            }
+        }
+    }
+    handle {
+        respond "Not found" 404
+    }
+}
+https://wallet-p2.demo.inoerawan.id:8443 {
+    tls /tls/fullchain.pem /tls/privkey.pem
+    header {
+        Cache-Control no-store
+        Referrer-Policy no-referrer
+        X-Content-Type-Options nosniff
+        -Server
+    }
+    handle /.well-known/assetlinks.json {
+        root * /app-links
+        file_server
+    }
+    @login {
+        method GET HEAD POST
+        path / /index.html /web-portals.js /web-portals.js.map /*.wasm /composeResources/* /auth/native/start /auth/native/session /auth/start /auth/callback /auth/account /auth/me /auth/logout
+    }
+    handle @login {
+        reverse_proxy custodian:8080
+    }
+    handle {
+        respond "Not found" 404
+    }
+}

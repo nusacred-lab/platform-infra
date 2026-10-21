@@ -1,0 +1,28 @@
+{
+	admin off
+	auto_https off
+	servers {
+		protocols h1 h2
+	}
+}
+
+# Connectivity probe only. Add application routes after their security review.
+https://issuer.demo.inoerawan.id:8443, https://wallet.demo.inoerawan.id:8443, https://auth.demo.inoerawan.id:8443, https://verifier.demo.inoerawan.id:8443 {
+	tls /certificates/fullchain.pem /certificates/privkey.pem
+	header {
+		Cache-Control "no-store"
+		X-Content-Type-Options "nosniff"
+		Referrer-Policy "no-referrer"
+		Content-Security-Policy "default-src 'none'; frame-ancestors 'none'"
+		-Server
+	}
+	@probe {
+		method GET HEAD
+		path / /healthz
+	}
+	respond @probe "Competency Proof: TLS connectivity probe. Application services are not enabled." 200
+	respond "Not found" 404
+}
+
+# No routes are imported unless the prerelease override is explicitly mounted.
+import /etc/caddy/optional/*.caddy
