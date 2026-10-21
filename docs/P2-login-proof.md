@@ -31,9 +31,10 @@ custodian BFF secret is mounted into the application, not the bootstrap admin
 credential or database/key directories. Client bootstrap authority is confined
 to the host-side migration/test tool.
 
-## Prerelease activation — confirmation required
+## Prerelease activation
 
-These files are staged and validated without opening a public route:
+The owner authorized activation for P2 testing on 21 October 2026. The following
+files now serve the two public test hosts:
 
 - `p2/prerelease.compose.yaml` and `p2/prerelease.caddy`: a dedicated ingress
   container on the existing edge bridge, an internal auth bridge and the internal
@@ -51,7 +52,7 @@ The wallet allowlist contains only compiled assets and application-login routes.
 No listener is published directly by the new ingress container. The existing
 four hostname probes remain intact. Public login is for synthetic P2 accounts.
 
-After owner confirmation only, from the infrastructure repository:
+For an authorized deployment, from the infrastructure repository:
 
 ```sh
 docker compose --env-file runtime/p2/compose.env -f p2/compose.yaml -f p2/application.compose.yaml -f p2/prerelease.compose.yaml config --quiet
@@ -67,3 +68,25 @@ all private paths and the four original probe hosts before physical APK login.
 Use the same complete Compose file set for subsequent updates. To withdraw the
 public routes, recreate the local edge using only its original base Compose
 file, then stop/remove only the `p2-ingress` service; preserve all state volumes.
+
+The TLS tunnel must also forward both P2 hostnames. Its original four hostname
+forwards alone cause TLS connection resets for P2 even when the local edge works.
+`configure-tunnel --include-p2` prepares all six explicit forwards; keep its token
+and SSH configuration private. An already active tunnel must be replaced once
+with the updated forwards. The deployed session used Pinggy's documented `force`
+option once; it is not stored in the persistent configuration or retried
+automatically. Duplicate-token login rejection now stops the tunnel helper.
+See [Pinggy's force option](https://pinggy.io/docs/usages/#4-force).
+
+```sh
+python3 scripts/check_p2_ingress.py --output runtime/p2/public-ingress.json
+python3 scripts/check_p2_ingress.py --loopback --output runtime/p2/local-ingress.json
+python3 scripts/test_p2_login.py --runtime runtime/p2 --public-frontend
+```
+
+The public and local ingress checks each pass 22 cases, covering verified TLS,
+the canonical discovery issuer, anonymous session denial, private paths returning
+404 and the four original probes returning 200. All 15 real-service login and
+rejection cases also pass through public HTTPS; their administrative test-session
+revocation still uses the private diagnostic endpoint. This does not establish
+physical AppAuth completion or persistent recovery correctness.

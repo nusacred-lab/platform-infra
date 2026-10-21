@@ -59,7 +59,9 @@ def main():
     sub.add_parser("certificate-status")
     sub.add_parser("confirm-dns")
     sub.add_parser("install-certificate")
-    sub.add_parser("configure-tunnel")
+    tunnel_config = sub.add_parser("configure-tunnel")
+    tunnel_config.add_argument("--include-p2", action="store_true",
+                               help="Add the two P2 TLS forwards after owner approval of public login")
     sub.add_parser("tunnel")
     for name in ("up", "down", "validate", "check"):
         sub.add_parser(name)
@@ -138,7 +140,8 @@ def main():
                   "  IdentityFile " + str(identity), "  IdentitiesOnly yes",
                   "  ServerAliveInterval 30", "  ServerAliveCountMax 3", "  ExitOnForwardFailure yes",
                   "  LogLevel ERROR"]
-        for host in HOSTS:
+        hosts = HOSTS + (["auth-p2.demo.inoerawan.id", "wallet-p2.demo.inoerawan.id"] if args.include_p2 else [])
+        for host in hosts:
             config.append(f"  RemoteForward tls//{host}:1 127.0.0.1:8443")
         (RUNTIME / "ssh/config").write_text("\n".join(config) + "\n")
         print("Private SSH configuration saved. No tunnel has been started.")
@@ -156,7 +159,7 @@ def main():
                 for line in process.stdout:
                     text = line.replace(token, "[REDACTED]")
                     print(text, end="", flush=True)
-                    if any(reason in text.lower() for reason in ("permission denied", "host key verification failed", "identification has changed", "remote port forwarding failed", "bad configuration")):
+                    if any(reason in text.lower() for reason in ("permission denied", "host key verification failed", "identification has changed", "remote port forwarding failed", "bad configuration", "login is not allowed", "a tunnel with the same token")):
                         fatal = True
                 code = process.wait()
                 if fatal or code not in (0, 255):

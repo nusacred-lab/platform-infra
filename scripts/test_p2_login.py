@@ -1,4 +1,4 @@
-"""Run real Keycloak PKCE/BFF login and rejection tests through private verified TLS."""
+"""Run real Keycloak PKCE/BFF login checks through verified local or public TLS."""
 import argparse
 from datetime import datetime, timezone
 import hashlib
@@ -21,6 +21,8 @@ REDIRECT = "id.nusacred.wallet.debug:/oauth2redirect"
 
 
 class Browser:
+    public_frontend = False
+
     def __init__(self):
         self.cookies = {}
         self.last_headers = []
@@ -32,7 +34,8 @@ class Browser:
         def connect():
             conn.sock = ssl.create_default_context().wrap_socket(
                 socket.create_connection(("127.0.0.1", 18443), timeout=15), server_hostname=uri.hostname)
-        conn.connect = connect
+        if not self.public_frontend:
+            conn.connect = connect
         outgoing = dict(headers or {})
         cookies = self.cookies.setdefault(uri.hostname, {})
         if cookies:
@@ -104,7 +107,10 @@ def json_request(browser, path, method="GET", body=None, headers=None):
 def main():
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--runtime", type=Path, required=True)
+    parser.add_argument("--public-frontend", action="store_true",
+                        help="Use public HTTPS for login; administrative revocation stays private")
     args = parser.parse_args()
+    Browser.public_frontend = args.public_frontend
     runtime = args.runtime.resolve()
     fixtures = json.loads((runtime / "login-fixtures.json").read_text())
     credentials = json.loads((runtime / "credentials.json").read_text())
@@ -247,11 +253,14 @@ def main():
     assert status == 204
     assert json_request(browser, "/auth/me", headers=native_header)[0] == 401
     passed("Real IdP session revocation invalidates the application session on the next check")
-    report = {"time": datetime.now(timezone.utc).isoformat(), "checks": results,
+    report = {"time": datetime.now(timezone.utc).isoformat(),
+              "frontend_transport": "public_verified_tls" if args.public_frontend else "private_verified_tls",
+              "checks": results,
               "limits": ["Synthetic fixtures were preverified, not email-link verified",
                          "HTTP PKCE exercises the backend contract, not physical APK browser completion",
                          "Persistent recovery registry and credential access are not implemented"]}
-    (runtime / "oidc-login-result.json").write_text(json.dumps(report, indent=2) + "\n")
+    filename = "oidc-public-login-result.json" if args.public_frontend else "oidc-login-result.json"
+    (runtime / filename).write_text(json.dumps(report, indent=2) + "\n")
     print("PASS:", len(results), "real-service login/rejection checks")
 
 
