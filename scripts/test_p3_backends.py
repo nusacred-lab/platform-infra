@@ -9,6 +9,7 @@ from http.cookies import SimpleCookie
 import http.client
 import json
 import os
+import secrets
 from pathlib import Path
 import subprocess
 import time
@@ -26,6 +27,10 @@ def main():
     assert 'runtime' in runtime.parts
     work = runtime.parent / 'p3-bff-proof'
     work.mkdir(mode=0o700, exist_ok=True)
+    reference_key = work / 'offer-reference-key'
+    if not reference_key.exists():
+        reference_key.write_bytes(secrets.token_bytes(32))
+        reference_key.chmod(0o600)
     fixtures = json.loads((runtime / 'login-fixtures.json').read_text())
     hosts = work / 'hosts'
     hosts.write_text('127.0.0.1 localhost auth-p2.demo.inoerawan.id\n')
@@ -74,7 +79,7 @@ def main():
         for suffix in ('', '-wal', '-shm'):
             Path(str(db)+suffix).unlink(missing_ok=True)
         env = dict(os.environ, HTTP_HOST='127.0.0.1', HTTP_PORT=str(port),
-                   APPLICATION_DB_PATH=str(db),
+                   APPLICATION_DB_PATH=str(db), OFFER_REFERENCE_KEY_FILE=str(reference_key),
                    OIDC_ISSUER='https://auth-p2.demo.inoerawan.id/realms/competency-proof-p2',
                    OIDC_BACKCHANNEL_ORIGIN='https://auth-p2.demo.inoerawan.id:18443',
                    OIDC_PORTAL_ORIGIN=origin, OIDC_CLIENT_ID=service+'-bff-p2',

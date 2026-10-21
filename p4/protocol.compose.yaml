@@ -1,0 +1,53 @@
+name: competency-proof-p4
+x-engine: &engine
+  read_only: true
+  cap_drop: [ALL]
+  security_opt: [no-new-privileges:true]
+  environment:
+    JAVA_TOOL_OPTIONS: -Xms64m -Xmx768m -XX:ActiveProcessorCount=2
+  mem_limit: 2g
+  cpus: 1.0
+  pids_limit: 512
+  networks: [protocol]
+  restart: "no"
+  logging:
+    driver: json-file
+    options: {max-size: 5m, max-file: "2"}
+services:
+  issuer:
+    <<: *engine
+    image: ${P4_ISSUER_IMAGE:?Use the scanned source-built fork image}
+    volumes: ["${P4_RUNTIME:?}/walt/issuer:/waltid-issuer-api2/config:ro,Z"]
+    tmpfs: ["/tmp:rw,noexec,nosuid,nodev,size=256m"]
+  wallet:
+    <<: *engine
+    image: ${P4_WALLET_IMAGE:?Use the scanned source-built fork image}
+    volumes:
+      - ${P4_RUNTIME:?}/walt/wallet:/waltid-wallet-api2/config:ro,Z
+      - ${P4_RUNTIME:?}/data:/data:Z
+    tmpfs: ["/tmp:rw,exec,nosuid,nodev,size=256m"]
+  verifier:
+    <<: *engine
+    image: ${P4_VERIFIER_IMAGE:?Use the scanned source-built fork image}
+    volumes: ["${P4_RUNTIME:?}/walt/verifier:/waltid-verifier-api2/config:ro,Z"]
+    tmpfs: ["/tmp:rw,noexec,nosuid,nodev,size=256m"]
+  access:
+    image: ${P4_EDGE_IMAGE:?Use the scanned diagnostic proxy}
+    command: [caddy, run, --config, /etc/caddy/Caddyfile, --adapter, caddyfile]
+    volumes: ["../p2/protocol.caddy:/etc/caddy/Caddyfile:ro,Z"]
+    ports: ["127.0.0.1:27005:7005", "127.0.0.1:27006:7006", "127.0.0.1:27004:7004"]
+    networks: [diagnostics, protocol]
+    read_only: true
+    tmpfs: ["/tmp:rw,noexec,nosuid,nodev,size=16m"]
+    cap_drop: [ALL]
+    security_opt: [no-new-privileges:true]
+    environment: {XDG_CONFIG_HOME: /tmp/config, XDG_DATA_HOME: /tmp/data}
+    mem_limit: 64m
+    pids_limit: 64
+    restart: "no"
+    logging:
+      driver: json-file
+      options: {max-size: 5m, max-file: "2"}
+networks:
+  protocol: {internal: true}
+  diagnostics:
