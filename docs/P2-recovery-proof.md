@@ -133,3 +133,13 @@ old native session, actual candidate uninstall/reinstall, fresh HTTPS callback
 login and presentation of the byte-identical retained credential (`SUCCESSFUL`).
 An actual Chrome button opens the signed APK's verified HTTPS request without
 sending automatically. Optical camera scanning remains a separate pending check.
+
+
+Same-second fresh authentication uses registry schema 2: a server-issued,
+nonce-bound flow must start strictly after the durable millisecond completion
+boundary. OIDC still forces login and checks nonce, signature, role and live
+introspection. Older, equal-boundary, unknown and future flows cannot use this
+exception. Schema-one recovery timestamps migrate conservatively to the end of
+the recorded second without changing wallet/key bindings. The camera preview
+also clips its TextureView to Compose bounds; the phone no longer shows preview
+overlap over the title or scanner controls.
