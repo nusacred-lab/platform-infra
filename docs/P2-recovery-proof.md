@@ -143,3 +143,10 @@ exception. Schema-one recovery timestamps migrate conservatively to the end of
 the recorded second without changing wallet/key bindings. The camera preview
 also clips its TextureView to Compose bounds; the phone no longer shows preview
 overlap over the title or scanner controls.
+
+
+Run `test_p2_recovery_same_second.py --runtime <private-runtime>` to reproduce the
+actual same-second Keycloak proof. It uses private TLS and a quiescent private
+SQLite/WAL snapshot, records only sanitized outcomes, and reports incomplete if
+service latency prevents observing equal timestamps. It never substitutes a
+forged token or a simulated IdP result. All five real-service checks passed.
