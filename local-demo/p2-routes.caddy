@@ -17,3 +17,23 @@ https://wallet-p2.demo.inoerawan.id:8443 {
         }
     }
 }
+
+https://issuer-p2.demo.inoerawan.id:8443 {
+    tls /certificates/fullchain.pem /certificates/privkey.pem
+    reverse_proxy https://p2-ingress:8443 {
+        header_up Host issuer-p2.demo.inoerawan.id
+        transport http {
+            tls_server_name issuer-p2.demo.inoerawan.id
+        }
+    }
+}
+
+https://verifier-p2.demo.inoerawan.id:8443 {
+    tls /certificates/fullchain.pem /certificates/privkey.pem
+    reverse_proxy https://p2-ingress:8443 {
+        header_up Host verifier-p2.demo.inoerawan.id
+        transport http {
+            tls_server_name verifier-p2.demo.inoerawan.id
+        }
+    }
+}

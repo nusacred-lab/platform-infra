@@ -1,0 +1,11 @@
+# Merge after P2, P3 and P4 overlays. Use source-built, scanned immutable P5 image IDs.
+services:
+  p2-ingress:
+    volumes:
+      - ../p5/ingress.caddy:/etc/caddy/Caddyfile:ro,Z
+  issuer-backend:
+    environment:
+      WALLET_PUBLIC_ORIGIN: https://wallet-p2.demo.inoerawan.id
+  company-backend:
+    environment:
+      WALLET_PUBLIC_ORIGIN: https://wallet-p2.demo.inoerawan.id
