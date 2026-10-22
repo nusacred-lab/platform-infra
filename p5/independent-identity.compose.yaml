@@ -132,7 +132,13 @@ services:
       issuer-auth-edge: {}
       company-auth-edge: {}
   p2-ingress:
-    networks: [auth-edge, application, frontend, issuer-auth-edge, company-auth-edge]
+    networks:
+      auth-edge: {}
+      application:
+        aliases: [lsp-nusantara.demo.inoerawan.id]
+      frontend: {}
+      issuer-auth-edge: {}
+      company-auth-edge: {}
 networks:
   issuer-identity: {internal: true}
   company-identity: {internal: true}

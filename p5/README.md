@@ -147,3 +147,27 @@ credentials. Also run the authenticated BFF boundary and identity-isolation chec
 through loopback. Browser inspection must verify the startup screen disappears
 and normal refresh completes. Do not infer multi-hour cache retention or a fixed
 load time from a short test; browsers may evict assets or bypass cache on hard reload.
+
+## Public LSP profile and employer trust review
+
+The issuer portal reads only `${P2_RUNTIME}/protocol/public-issuer.json`, generated
+from the existing protocol identity. Never mount `issuer2-profiles.conf` into the
+portal: that file contains the private signing key. Before activation, compare the
+public file's `identity` (or retained P2 `did`) with the actual `competencyDemo.issuerDid` without printing
+private configuration or regenerating keys.
+
+The anonymous LSP profile is `https://lsp-nusantara.demo.inoerawan.id/?view=issuer-profile`.
+The company BFF retrieves its exact JSON publication through verified HTTPS on
+port 8443. The ingress has a matching application-network DNS alias; no new host
+port or public tunnel forwarding is needed. The fixed endpoint validates TLS,
+rejects redirects and accepts no user-supplied URL. Independent organization
+verification is still the employer's responsibility; this is not an accreditation
+registry or automatic trust anchor.
+
+In the company portal use **Trusted issuers → Review issuer → Approve trust**.
+Select **Demo walkthrough only** for these synthetic organizations and record how
+the identity was checked. Publication never enables trust automatically. Existing
+trust entries retain their identity/revision and display a missing-review notice;
+a new approval attaches provenance. Issuer/company database migration 3 requires a
+consistent pre-migration checkpoint; old binaries need their matching old database
+snapshots for rollback. Retain only the current verified recovery checkpoint.
