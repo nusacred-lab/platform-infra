@@ -150,8 +150,10 @@ load time from a short test; browsers may evict assets or bypass cache on hard r
 
 ## Public LSP profile and employer trust review
 
-The issuer portal reads only `${P2_RUNTIME}/protocol/public-issuer.json`, generated
-from the existing protocol identity. Never mount `issuer2-profiles.conf` into the
+Set `P5_ISSUER_PUBLIC_IDENTITY_FILE` to the existing absolute path of the protocol's
+`public-issuer.json` file. The issuer portal reads only that public file, generated
+from the existing protocol identity. The bind mount refuses to create a missing
+source path. Never mount `issuer2-profiles.conf` into the
 portal: that file contains the private signing key. Before activation, compare the
 public file's `identity` (or retained P2 `did`) with the actual `competencyDemo.issuerDid` without printing
 private configuration or regenerating keys.
