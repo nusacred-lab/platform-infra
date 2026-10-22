@@ -109,3 +109,52 @@ https://verifier-p2.demo.inoerawan.id:8443 {
     header Referrer-Policy no-referrer
     redir https://karya-instalasi.demo.inoerawan.id{uri} 308
 }
+
+https://login-lsp-nusantara.demo.inoerawan.id:8443 {
+    tls /tls/fullchain.pem /tls/privkey.pem
+    header {
+        Cache-Control no-store
+        Referrer-Policy no-referrer
+        X-Content-Type-Options nosniff
+        -Server
+    }
+    @login {
+        method GET HEAD POST
+        path /realms/lsp-nusantara/.well-known/openid-configuration /realms/lsp-nusantara/protocol/openid-connect/auth /realms/lsp-nusantara/protocol/openid-connect/token /realms/lsp-nusantara/protocol/openid-connect/certs /realms/lsp-nusantara/protocol/openid-connect/revoke /realms/lsp-nusantara/login-actions/authenticate /realms/lsp-nusantara/login-actions/restart /realms/lsp-nusantara/login-actions/reset-credentials /realms/lsp-nusantara/login-actions/action-token /realms/lsp-nusantara/login-actions/required-action /realms/lsp-nusantara/login-actions/execute-actions /resources/*
+    }
+    handle @login {
+        reverse_proxy https://issuer-keycloak:8443 {
+            header_up Host login-lsp-nusantara.demo.inoerawan.id
+            transport http {
+                tls_server_name login-lsp-nusantara.demo.inoerawan.id
+            }
+        }
+    }
+    handle {
+        respond "Not found" 404
+    }
+}
+https://login-karya-instalasi.demo.inoerawan.id:8443 {
+    tls /tls/fullchain.pem /tls/privkey.pem
+    header {
+        Cache-Control no-store
+        Referrer-Policy no-referrer
+        X-Content-Type-Options nosniff
+        -Server
+    }
+    @login {
+        method GET HEAD POST
+        path /realms/karya-instalasi/.well-known/openid-configuration /realms/karya-instalasi/protocol/openid-connect/auth /realms/karya-instalasi/protocol/openid-connect/token /realms/karya-instalasi/protocol/openid-connect/certs /realms/karya-instalasi/protocol/openid-connect/revoke /realms/karya-instalasi/login-actions/authenticate /realms/karya-instalasi/login-actions/restart /realms/karya-instalasi/login-actions/reset-credentials /realms/karya-instalasi/login-actions/action-token /realms/karya-instalasi/login-actions/required-action /realms/karya-instalasi/login-actions/execute-actions /resources/*
+    }
+    handle @login {
+        reverse_proxy https://company-keycloak:8443 {
+            header_up Host login-karya-instalasi.demo.inoerawan.id
+            transport http {
+                tls_server_name login-karya-instalasi.demo.inoerawan.id
+            }
+        }
+    }
+    handle {
+        respond "Not found" 404
+    }
+}

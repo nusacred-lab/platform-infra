@@ -25,13 +25,13 @@ services:
       WALLET_PUBLIC_ORIGIN: https://dompet-identitas.demo.inoerawan.id
   issuer-backend:
     environment:
-      OIDC_ISSUER: https://login-dompet-identitas.demo.inoerawan.id/realms/competency-proof-p2
-      OIDC_BACKCHANNEL_ORIGIN: https://login-dompet-identitas.demo.inoerawan.id:8443
+      OIDC_ISSUER: https://login-lsp-nusantara.demo.inoerawan.id/realms/lsp-nusantara
+      OIDC_BACKCHANNEL_ORIGIN: https://login-lsp-nusantara.demo.inoerawan.id:8443
       OIDC_PORTAL_ORIGIN: https://lsp-nusantara.demo.inoerawan.id
       WALLET_PUBLIC_ORIGIN: https://dompet-identitas.demo.inoerawan.id
   company-backend:
     environment:
-      OIDC_ISSUER: https://login-dompet-identitas.demo.inoerawan.id/realms/competency-proof-p2
-      OIDC_BACKCHANNEL_ORIGIN: https://login-dompet-identitas.demo.inoerawan.id:8443
+      OIDC_ISSUER: https://login-karya-instalasi.demo.inoerawan.id/realms/karya-instalasi
+      OIDC_BACKCHANNEL_ORIGIN: https://login-karya-instalasi.demo.inoerawan.id:8443
       OIDC_PORTAL_ORIGIN: https://karya-instalasi.demo.inoerawan.id
       WALLET_PUBLIC_ORIGIN: https://dompet-identitas.demo.inoerawan.id

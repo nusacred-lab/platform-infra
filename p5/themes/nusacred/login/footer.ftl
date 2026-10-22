@@ -13,7 +13,13 @@
 <p>Independent custodial wallet provider.</p>
 <p>Your certifier issues your credentials. The employer evaluates them only after you approve sharing.</p>
 </#if>
+<#if client?? && client.clientId == "issuer-bff-p2">
+<p class="identity-service">Authentication managed independently by LSP Teknik Ketenagalistrikan Nusantara (demo).</p>
+<#elseif client?? && client.clientId == "company-bff-p2">
+<p class="identity-service">Authentication managed independently by PT Karya Instalasi Nusantara (demo).</p>
+<#else>
 <p class="identity-service">Authentication provided by PT Dompet Identitas Nusantara (demo).</p>
+</#if>
 <span>Synthetic demonstration</span>
 </footer>
 </#macro>

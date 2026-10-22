@@ -49,6 +49,36 @@ The ingress adds only native renewal and the standard OIDC token revocation path
 
 ## Independent organizations and named domains
 
+Activate `independent-identity.compose.yaml` after `experience.compose.yaml` and
+before any active walkthrough storage overlay. The issuer and employer each run
+a separate provider-free Keycloak image and PostgreSQL service, with distinct
+private database volumes, credentials, bootstrap administrators, internal database
+networks, signing keys and client secrets. Their exact login origins are
+`login-lsp-nusantara.demo.inoerawan.id/realms/lsp-nusantara` and
+`login-karya-instalasi.demo.inoerawan.id/realms/karya-instalasi`. The wallet retains
+its existing issuer, accounts, keys, coordinated recovery and mobile token policy.
+No identity broker or cross-entity SSO is configured. Synthetic SMTP and the TLS
+edge share host infrastructure for the demo; this is not physical host isolation.
+
+Stop the source Keycloak and application writers, take a consistent database and
+application backup, and export the realm offline with credentials. Run
+`prepare_p5_independent_identity.py` against that private export into a new private
+runtime directory. It retains staff subjects/password hashes while excluding
+wallet users, wallet clients, source signing keys and identity federation. Import
+only into empty independent databases. Prepare distinct database/bootstrap
+credentials and the scanned `P5_STAFF_KEYCLOAK_IMAGE` before activation; the two
+generated client secrets replace the old BFF secrets through the new overlay.
+Verify staff logins before removing migrated users, staff roles and business
+clients from the wallet realm. Invalidate old shared sessions during cutover.
+Do not rerun old shared-realm fixture provisioning after this migration.
+
+Run `check_p5_independent_identity.py --accounts <private-accounts.json> --output
+<private-report.json>` for same-browser login, empty cross-entity login identity,
+wrong-entity credential rejection, distinct signing keys, local recovery forms and
+independent logout. Default transport verifies TLS through loopback. Check public
+routes without credentials separately. Preserve offline rollback exports privately;
+they contain password hashes and secrets. Do not publish them as evidence.
+
 The issuer uses `lsp-nusantara.demo.inoerawan.id`, the custodial wallet uses
 `dompet-identitas.demo.inoerawan.id`, the employer uses
 `karya-instalasi.demo.inoerawan.id`, and the wallet-provider IdP uses
@@ -56,6 +86,22 @@ The issuer uses `lsp-nusantara.demo.inoerawan.id`, the custodial wallet uses
 administrative boundary; old public entry points redirect to the matching entity.
 All names are covered by the existing one-level wildcard certificate. Add the
 four named TLS forwardings to the existing private tunnel; do not print its token.
+
+Run exactly one tunnel supervisor, independently of the interactive terminal.
+An interrupted connection can leave a remote session registered, causing the next
+connection to be rejected as already active. For a token dedicated exclusively
+to this demo, the private SSH `User` value may include Pinggy's `+force` option
+to replace that stale session on reconnect. Never enable this for a shared token
+or run competing supervisors. The helper redacts the underlying token with or
+without this option and still stops on authentication or host-key failures.
+Idle portal traffic does not deliberately stop the supervisor. Public access
+still requires the local host to remain awake and connected to the internet.
+The private deployment can pin a previously verified provider endpoint to avoid
+server changes during reconnects and stale DNS destinations. Preserve the exact
+existing host-key identity with `HostKeyAlias` (including its port); keep strict
+host-key checks enabled. Revalidate public HTTPS after reconnecting, rather than
+treating SSH authentication alone as readiness. This pin is an operational
+workaround and must be reviewed if the provider retires that endpoint.
 
 The P5 overlay fixes `KC_HOSTNAME` and the recovery issuer to the new IdP origin.
 During a maintenance window, back up PostgreSQL, wallet and registry volumes and

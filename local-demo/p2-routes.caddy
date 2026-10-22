@@ -81,3 +81,23 @@ https://karya-instalasi.demo.inoerawan.id:8443 {
         }
     }
 }
+
+https://login-lsp-nusantara.demo.inoerawan.id:8443 {
+    tls /certificates/fullchain.pem /certificates/privkey.pem
+    reverse_proxy https://p2-ingress:8443 {
+        header_up Host login-lsp-nusantara.demo.inoerawan.id
+        transport http {
+            tls_server_name login-lsp-nusantara.demo.inoerawan.id
+        }
+    }
+}
+
+https://login-karya-instalasi.demo.inoerawan.id:8443 {
+    tls /certificates/fullchain.pem /certificates/privkey.pem
+    reverse_proxy https://p2-ingress:8443 {
+        header_up Host login-karya-instalasi.demo.inoerawan.id
+        transport http {
+            tls_server_name login-karya-instalasi.demo.inoerawan.id
+        }
+    }
+}

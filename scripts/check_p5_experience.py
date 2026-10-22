@@ -29,7 +29,7 @@ class Browser:
     def request(self, url, method='GET', body=None, headers=None, form=False):
         uri = urlsplit(url)
         assert uri.scheme == 'https' and uri.hostname in {
-            role+'.demo.inoerawan.id' for role in ('login-dompet-identitas','dompet-identitas','lsp-nusantara','karya-instalasi')}
+            role+'.demo.inoerawan.id' for role in ('login-dompet-identitas','dompet-identitas','lsp-nusantara','karya-instalasi','login-lsp-nusantara','login-karya-instalasi')}
         c = http.client.HTTPSConnection(uri.hostname, timeout=10)
         def connect():
             c.sock = ssl.create_default_context().wrap_socket(
