@@ -129,3 +129,21 @@ alias. The backend still enforces equal issuer/backchannel hosts and full TLS
 verification; the new private Caddy file is never imported by public ingress.
 See [Keycloak hostname configuration](https://www.keycloak.org/server/hostname)
 for why frontend URL changes affect discovery, tokens and action links.
+
+
+## Public portal asset delivery
+
+`ingress.caddy` compresses successful content-addressed JavaScript and WebAssembly
+with negotiated zstd/gzip. Immutable public caching applies only to exact hashed
+asset paths, GET/HEAD and status 200/206/304. HTML, authentication, application APIs,
+errors and unversioned assets remain `no-store`. The wallet route allowlist permits
+the two fingerprinted JavaScript names without widening credential or admin routes.
+The application image packager versions JavaScript by content and rewrites HTML.
+
+Run `check_p5_web_delivery.py --output <private-report.json>` for verified-loopback
+byte/digest/compression/cache checks on all three portals. `--public` sends only
+anonymous requests to verify the real public transport; it never sends account
+credentials. Also run the authenticated BFF boundary and identity-isolation checks
+through loopback. Browser inspection must verify the startup screen disappears
+and normal refresh completes. Do not infer multi-hour cache retention or a fixed
+load time from a short test; browsers may evict assets or bypass cache on hard reload.
