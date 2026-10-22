@@ -33,3 +33,16 @@ Validate the loaded configuration before activation. After activation, check all
 three portal identities, unauthenticated record-list denial, asset links, the
 existing issuer public-key fingerprint and actual Android receive/present flows.
 P5 preview validation does not replace P6 release acceptance or P7 operations.
+
+## Branded identity and approved mobile renewal
+
+Mount the reviewed `themes/nusacred` directory with the P5 overlay, then run
+`scripts/configure_p5_auth.py --runtime /absolute/private/identity/runtime`.
+The helper backs up current realm/client settings privately, selects the login
+theme and applies the approved five-minute access / 24-hour idle / seven-day max
+mobile policy. Refresh rotation remains enabled with zero reuse. Browser clients
+retain their shorter client-session limits; no offline access or direct password
+grant is enabled. The existing guarded recovery flow and disabled account console
+remain intact. Theme inheritance preserves upstream authentication forms, actions,
+validation and password visibility; custom CSS/messages/footer provide wallet branding.
+The ingress adds only native renewal and the standard OIDC token revocation path.

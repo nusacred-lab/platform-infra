@@ -16,7 +16,7 @@ https://auth-p2.demo.inoerawan.id:8443 {
     }
     @login {
         method GET HEAD POST
-        path /realms/competency-proof-p2/.well-known/openid-configuration /realms/competency-proof-p2/protocol/openid-connect/auth /realms/competency-proof-p2/protocol/openid-connect/token /realms/competency-proof-p2/protocol/openid-connect/certs /realms/competency-proof-p2/login-actions/authenticate /realms/competency-proof-p2/login-actions/restart /realms/competency-proof-p2/login-actions/reset-credentials /realms/competency-proof-p2/login-actions/action-token /realms/competency-proof-p2/login-actions/required-action /realms/competency-proof-p2/login-actions/execute-actions /resources/*
+        path /realms/competency-proof-p2/.well-known/openid-configuration /realms/competency-proof-p2/protocol/openid-connect/auth /realms/competency-proof-p2/protocol/openid-connect/token /realms/competency-proof-p2/protocol/openid-connect/certs /realms/competency-proof-p2/protocol/openid-connect/revoke /realms/competency-proof-p2/login-actions/authenticate /realms/competency-proof-p2/login-actions/restart /realms/competency-proof-p2/login-actions/reset-credentials /realms/competency-proof-p2/login-actions/action-token /realms/competency-proof-p2/login-actions/required-action /realms/competency-proof-p2/login-actions/execute-actions /resources/*
     }
     handle @login {
         reverse_proxy https://keycloak:8443 {
@@ -49,7 +49,7 @@ https://wallet-p2.demo.inoerawan.id:8443 {
     }
     @login {
         method GET HEAD POST
-        path / /index.html /web-portals.js /web-portals.js.map /*.wasm /composeResources/* /auth/native/start /auth/native/session /auth/start /auth/callback /auth/account /auth/me /auth/logout /api/v1/wallet/provision /api/v1/wallet/reconcile /api/v1/wallet/credentials /api/v1/wallet/preview /api/v1/wallet/present /api/v1/wallet/credentials/* /api/v1/me /api/v1/portal-config /api/v1/portal-session /api/v1/service-status /api/v1/exchange-contexts /api/v1/exchange-contexts/* /api/v1/operations/*
+        path / /index.html /web-portals.js /web-portals.js.map /*.wasm /composeResources/* /auth/native/start /auth/native/session /api/v1/sessions/renew /auth/start /auth/callback /auth/account /auth/me /auth/logout /api/v1/wallet/provision /api/v1/wallet/reconcile /api/v1/wallet/credentials /api/v1/wallet/preview /api/v1/wallet/present /api/v1/wallet/credentials/* /api/v1/me /api/v1/portal-config /api/v1/portal-session /api/v1/service-status /api/v1/exchange-contexts /api/v1/exchange-contexts/* /api/v1/operations/*
     }
     handle @login {
         reverse_proxy custodian:8080

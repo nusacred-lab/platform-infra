@@ -1,5 +1,8 @@
 # Merge after P2, P3 and P4 overlays. Use source-built, scanned immutable P5 image IDs.
 services:
+  keycloak:
+    volumes:
+      - ../p5/themes/nusacred:/opt/keycloak/themes/nusacred:ro,Z
   p2-ingress:
     volumes:
       - ../p5/ingress.caddy:/etc/caddy/Caddyfile:ro,Z
