@@ -1,0 +1,17 @@
+# Merge after P2 and P3 overlays. Private connectivity only; activation requires matching P4 binaries.
+services:
+  issuer-backend:
+    environment:
+      OFFER_REFERENCE_KEY_FILE: /run/secrets/offer-reference-key
+    secrets: [offer-reference-key]
+    networks: [application, protocol]
+  company-backend:
+    networks: [application, protocol]
+  custodian:
+    environment:
+      OFFER_REFERENCE_KEY_FILE: /run/secrets/offer-reference-key
+    secrets: [offer-reference-key]
+    networks: [application, recovery, wallet-backend, protocol]
+secrets:
+  offer-reference-key:
+    file: ${P4_RUNTIME:?Prepare the private P4 runtime}/offer-reference-key
