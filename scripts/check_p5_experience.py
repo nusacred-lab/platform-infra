@@ -29,7 +29,7 @@ class Browser:
     def request(self, url, method='GET', body=None, headers=None, form=False):
         uri = urlsplit(url)
         assert uri.scheme == 'https' and uri.hostname in {
-            role+'-p2.demo.inoerawan.id' for role in ('auth','wallet','issuer','verifier')}
+            role+'.demo.inoerawan.id' for role in ('login-dompet-identitas','dompet-identitas','lsp-nusantara','karya-instalasi')}
         c = http.client.HTTPSConnection(uri.hostname, timeout=10)
         def connect():
             c.sock = ssl.create_default_context().wrap_socket(
@@ -64,10 +64,10 @@ def check(name,condition):
     checks.append(name)
 
 sessions = []
-for service,host,role,path in [('issuer','issuer','issuer-admin','/api/v1/assessments'),
-                             ('company','verifier','company-admin','/api/v1/verification-sessions'),
-                             ('custodian','wallet','custodian-admin','/api/v1/service-status')]:
-    origin = 'https://'+host+'-p2.demo.inoerawan.id'
+for service,host,role,path in [('issuer','lsp-nusantara','issuer-admin','/api/v1/assessments'),
+                             ('company','karya-instalasi','company-admin','/api/v1/verification-sessions'),
+                             ('custodian','dompet-identitas','custodian-admin','/api/v1/service-status')]:
+    origin = 'https://'+host+'.demo.inoerawan.id'
     anonymous = Browser()
     status,_,raw = anonymous.request(origin+'/api/v1/portal-config')
     check(service+': correct live portal identity',status==200 and json.loads(raw)['service']==service)

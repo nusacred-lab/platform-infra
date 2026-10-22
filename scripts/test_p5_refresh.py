@@ -12,7 +12,7 @@ import secrets
 import time
 from urllib.parse import parse_qs, urlencode, urlsplit
 from check_p2_identity import request as admin_request, REALM
-from test_p2_login import Browser, ISSUER, REDIRECT, json_request, login
+from p5_transport import Browser, ISSUER, REDIRECT, json_request, login
 
 p=argparse.ArgumentParser(description=__doc__)
 p.add_argument('--runtime',type=Path,required=True)

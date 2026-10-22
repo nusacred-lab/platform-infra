@@ -46,3 +46,40 @@ grant is enabled. The existing guarded recovery flow and disabled account consol
 remain intact. Theme inheritance preserves upstream authentication forms, actions,
 validation and password visibility; custom CSS/messages/footer provide wallet branding.
 The ingress adds only native renewal and the standard OIDC token revocation path.
+
+## Independent organizations and named domains
+
+The issuer uses `lsp-nusantara.demo.inoerawan.id`, the custodial wallet uses
+`dompet-identitas.demo.inoerawan.id`, the employer uses
+`karya-instalasi.demo.inoerawan.id`, and the wallet-provider IdP uses
+`login-dompet-identitas.demo.inoerawan.id`. Exact routes retain the existing
+administrative boundary; old public entry points redirect to the matching entity.
+All names are covered by the existing one-level wildcard certificate. Add the
+four named TLS forwardings to the existing private tunnel; do not print its token.
+
+The P5 overlay fixes `KC_HOSTNAME` and the recovery issuer to the new IdP origin.
+During a maintenance window, back up PostgreSQL, wallet and registry volumes and
+private configuration, configure exact client callbacks with
+`configure_p5_entities.py`, and log out old IdP sessions. Stop the custodian and
+identity writers before copying the registry. Run `migrate_p5_registry_domain.py`
+on the offline copy, inspect its invariant report, then install it with the
+original ownership. Preserve the active walkthrough storage overlay when starting
+the services. Check real login, recovery links, the same account/wallet bindings,
+refresh, new App Links and private-route denial before handing back access.
+
+This is a one-time issuer-URL migration, not a general issuer alias or bypass.
+Never simply change `OIDC_ISSUER` on an existing registry: its `(issuer, subject)`
+identity mapping would otherwise create different accounts. Realm/client IDs,
+subjects, secrets, keys and recovery guards stay intact. Old mobile candidates
+must be updated to signed versionCode 4. Use the new P5 transport/checks for these
+domains; dated P2-P4 reports and compatibility harness defaults are historical.
+
+Login themes are client-specific: purple `lsp-nusantara`, copper/navy
+`karya-instalasi`, and teal `nusacred` for wallet clients. The footer distinguishes
+the destination organization from authentication operated by the wallet provider.
+
+The private `access` proxy gains a matching IdP hostname and application-network
+alias. The backend still enforces equal issuer/backchannel hosts and full TLS
+verification; the new private Caddy file is never imported by public ingress.
+See [Keycloak hostname configuration](https://www.keycloak.org/server/hostname)
+for why frontend URL changes affect discovery, tokens and action links.

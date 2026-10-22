@@ -25,7 +25,7 @@ if not backup.exists():
     backup.write_text(json.dumps({'realm':realm,'clients':clients},indent=2)+'\n');backup.chmod(0o600)
 assert realm['revokeRefreshToken'] and realm['refreshTokenMaxReuse']==0
 assert realm['resetPasswordAllowed'], 'Configure guarded recovery before P5 authentication'
-settings={'loginTheme':'nusacred','displayName':'NusaCred','displayNameHtml':'NusaCred',
+settings={'loginTheme':'nusacred','displayName':'NusaCred Wallet','displayNameHtml':'NusaCred Wallet',
           'accessTokenLifespan':300,'ssoSessionIdleTimeout':86400,'ssoSessionMaxLifespan':604800,
           'revokeRefreshToken':True,'refreshTokenMaxReuse':0}
 # Keycloak validates client timeouts against realm bounds, so apply those bounds first.
@@ -35,6 +35,7 @@ for c in clients:
     assert not c.get('directAccessGrantsEnabled') and not c.get('serviceAccountsEnabled')
     attributes=c.setdefault('attributes',{})
     native=c['clientId']=='android-wallet-p2'
+    attributes['login_theme']={'issuer-bff-p2':'lsp-nusantara','company-bff-p2':'karya-instalasi'}.get(c['clientId'],'nusacred')
     attributes.update({'client.session.idle.timeout':str(86400 if native else 1800),
                        'client.session.max.lifespan':str(604800 if native else 3600)})
     if native:attributes['access.token.lifespan']='300'

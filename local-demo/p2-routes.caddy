@@ -37,3 +37,47 @@ https://verifier-p2.demo.inoerawan.id:8443 {
         }
     }
 }
+
+# Independent entity domain; the prerelease alias remains above.
+https://dompet-identitas.demo.inoerawan.id:8443 {
+    tls /certificates/fullchain.pem /certificates/privkey.pem
+    reverse_proxy https://p2-ingress:8443 {
+        header_up Host dompet-identitas.demo.inoerawan.id
+        transport http {
+            tls_server_name dompet-identitas.demo.inoerawan.id
+        }
+    }
+}
+
+# Independent entity domain; the prerelease alias remains above.
+https://login-dompet-identitas.demo.inoerawan.id:8443 {
+    tls /certificates/fullchain.pem /certificates/privkey.pem
+    reverse_proxy https://p2-ingress:8443 {
+        header_up Host login-dompet-identitas.demo.inoerawan.id
+        transport http {
+            tls_server_name login-dompet-identitas.demo.inoerawan.id
+        }
+    }
+}
+
+# Independent entity domain; the prerelease alias remains above.
+https://lsp-nusantara.demo.inoerawan.id:8443 {
+    tls /certificates/fullchain.pem /certificates/privkey.pem
+    reverse_proxy https://p2-ingress:8443 {
+        header_up Host lsp-nusantara.demo.inoerawan.id
+        transport http {
+            tls_server_name lsp-nusantara.demo.inoerawan.id
+        }
+    }
+}
+
+# Independent entity domain; the prerelease alias remains above.
+https://karya-instalasi.demo.inoerawan.id:8443 {
+    tls /certificates/fullchain.pem /certificates/privkey.pem
+    reverse_proxy https://p2-ingress:8443 {
+        header_up Host karya-instalasi.demo.inoerawan.id
+        transport http {
+            tls_server_name karya-instalasi.demo.inoerawan.id
+        }
+    }
+}

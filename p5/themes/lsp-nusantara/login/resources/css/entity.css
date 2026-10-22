@@ -1,0 +1,3 @@
+:root { --nc-ink:#29264c; --nc-teal:#5140b5; --nc-paper:#f6f5fc; --nc-muted:#69647e; --nc-line:#e2deef; }
+#kc-header-wrapper::before { background-image:url("../img/issuer.svg"); border-radius:8px; font-size:24px; }
+#kc-header-wrapper::after { content:"CREDENTIAL ISSUER"; }

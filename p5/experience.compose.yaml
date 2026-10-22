@@ -1,14 +1,37 @@
-# Merge after P2, P3 and P4 overlays. Use source-built, scanned immutable P5 image IDs.
+# Merge after P2, P3 and P4 overlays. Preserve the active walkthrough storage overlay.
 services:
   keycloak:
+    environment:
+      KC_HOSTNAME: https://login-dompet-identitas.demo.inoerawan.id
+      RECOVERY_ISSUER: https://login-dompet-identitas.demo.inoerawan.id/realms/competency-proof-p2
     volumes:
       - ../p5/themes/nusacred:/opt/keycloak/themes/nusacred:ro,Z
+      - ../p5/themes/lsp-nusantara:/opt/keycloak/themes/lsp-nusantara:ro,Z
+      - ../p5/themes/karya-instalasi:/opt/keycloak/themes/karya-instalasi:ro,Z
+  access:
+    volumes:
+      - ../p5/private-identity.caddy:/etc/caddy/optional/entity-identity.caddy:ro,Z
+    networks:
+      application:
+        aliases: [login-dompet-identitas.demo.inoerawan.id]
   p2-ingress:
     volumes:
       - ../p5/ingress.caddy:/etc/caddy/Caddyfile:ro,Z
+  custodian:
+    environment:
+      OIDC_ISSUER: https://login-dompet-identitas.demo.inoerawan.id/realms/competency-proof-p2
+      OIDC_BACKCHANNEL_ORIGIN: https://login-dompet-identitas.demo.inoerawan.id:8443
+      OIDC_PORTAL_ORIGIN: https://dompet-identitas.demo.inoerawan.id
+      WALLET_PUBLIC_ORIGIN: https://dompet-identitas.demo.inoerawan.id
   issuer-backend:
     environment:
-      WALLET_PUBLIC_ORIGIN: https://wallet-p2.demo.inoerawan.id
+      OIDC_ISSUER: https://login-dompet-identitas.demo.inoerawan.id/realms/competency-proof-p2
+      OIDC_BACKCHANNEL_ORIGIN: https://login-dompet-identitas.demo.inoerawan.id:8443
+      OIDC_PORTAL_ORIGIN: https://lsp-nusantara.demo.inoerawan.id
+      WALLET_PUBLIC_ORIGIN: https://dompet-identitas.demo.inoerawan.id
   company-backend:
     environment:
-      WALLET_PUBLIC_ORIGIN: https://wallet-p2.demo.inoerawan.id
+      OIDC_ISSUER: https://login-dompet-identitas.demo.inoerawan.id/realms/competency-proof-p2
+      OIDC_BACKCHANNEL_ORIGIN: https://login-dompet-identitas.demo.inoerawan.id:8443
+      OIDC_PORTAL_ORIGIN: https://karya-instalasi.demo.inoerawan.id
+      WALLET_PUBLIC_ORIGIN: https://dompet-identitas.demo.inoerawan.id

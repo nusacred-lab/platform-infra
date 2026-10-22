@@ -5,7 +5,7 @@ html.login-pf, html.login-pf body { min-height:100%; background:var(--nc-paper);
 .login-pf-page { padding:0 0 32px; }
 #kc-header { padding:22px 28px; margin:0 0 48px; background:white; border-bottom:1px solid var(--nc-line); text-align:left; }
 #kc-header-wrapper { padding:0; max-width:1100px; margin:auto; color:var(--nc-ink); font-size:28px; font-weight:750; text-transform:none; letter-spacing:-1px; }
-#kc-header-wrapper::before { content:"✓"; display:inline-grid; place-items:center; width:44px; height:44px; margin-right:12px; border-radius:13px; color:white; background:var(--nc-teal); font-size:27px; vertical-align:middle; }
+#kc-header-wrapper::before { content:""; display:inline-grid; place-items:center; width:44px; height:44px; margin-right:12px; border-radius:13px; color:white; background:var(--nc-teal) url("../img/wallet.svg") no-repeat center; background-size:24px; font-size:27px; vertical-align:middle; }
 .login-pf-page .card-pf { width:calc(100% - 40px); max-width:480px; padding:32px; margin:0 auto; border:1px solid var(--nc-line); border-radius:22px; box-shadow:0 12px 40px #18333108; background:white; }
 .login-pf-header { margin-bottom:24px; }
 #kc-page-title { margin:0; text-align:left; font-size:30px; line-height:1.25; letter-spacing:-1px; font-weight:750; }
@@ -13,7 +13,7 @@ html.login-pf, html.login-pf body { min-height:100%; background:var(--nc-paper);
 .login-pf-page .form-group { margin:0 0 20px; }
 .login-pf-page label { display:block; margin-bottom:8px; color:var(--nc-ink); font-size:14px; font-weight:650; }
 .login-pf-page input:not([type=checkbox]):not([type=hidden]):not([type=submit]) { min-height:52px; width:100%; padding:12px 14px; border:1px solid #a6b8b2; border-radius:10px; box-shadow:none; background:white; color:var(--nc-ink); font:inherit; }
-.login-pf-page input:focus-visible, .login-pf-page a:focus-visible, .login-pf-page button:focus-visible { outline:3px solid #087b6970; outline-offset:3px; }
+.login-pf-page input:focus-visible, .login-pf-page a:focus-visible, .login-pf-page button:focus-visible { outline:3px solid var(--nc-teal); outline-offset:3px; }
 .login-pf-page .pf-c-input-group { display:flex; gap:8px; align-items:stretch; }
 .login-pf-page .pf-c-input-group input { min-width:0; flex:1; }
 .login-pf-page button[data-password-toggle] { min-width:52px; min-height:52px; border:1px solid var(--nc-line); border-radius:10px; background:var(--nc-paper); color:var(--nc-teal); }
@@ -36,3 +36,6 @@ html.login-pf, html.login-pf body { min-height:100%; background:var(--nc-paper);
 .nusacred-provider p { margin:10px 0; }
 .nusacred-provider span { font-size:11px; }
 @media(max-width:540px) { #kc-header { padding:16px 22px; margin-bottom:24px; } #kc-header-wrapper { font-size:25px; } .login-pf-page .card-pf { width:calc(100% - 32px); padding:24px; border-radius:18px; } #kc-page-title { font-size:28px; } }
+
+#kc-header-wrapper::after { content:"WALLET PROVIDER"; display:block; padding-left:56px; margin-top:3px; font-size:10px; line-height:1.6; letter-spacing:1.4px; color:var(--nc-muted); }
+.nusacred-provider .identity-service { padding:12px; border-radius:8px; background:var(--nc-paper); }

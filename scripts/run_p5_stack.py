@@ -25,8 +25,7 @@ for file in ('p2/compose.yaml', 'p2/application.compose.yaml', 'p2/prerelease.co
     command += ['-f', str(root/file)]
 subprocess.run(command+['config', '--quiet'], check=True)
 subprocess.run(command+['up', '-d', '--no-build'], check=True)
-for service, prefix in [('custodian', 'wallet'), ('issuer', 'issuer'), ('company', 'verifier')]:
-    hostname = prefix+'-p2.demo.inoerawan.id'
+for service, hostname in [('custodian', 'dompet-identitas.demo.inoerawan.id'), ('issuer', 'lsp-nusantara.demo.inoerawan.id'), ('company', 'karya-instalasi.demo.inoerawan.id')]:
     ready = False
     for attempt in range(30):
         connection = http.client.HTTPSConnection(hostname, timeout=3)

@@ -6,7 +6,7 @@
         protocols h1 h2
     }
 }
-https://auth-p2.demo.inoerawan.id:8443 {
+https://login-dompet-identitas.demo.inoerawan.id:8443 {
     tls /tls/fullchain.pem /tls/privkey.pem
     header {
         Cache-Control no-store
@@ -20,9 +20,9 @@ https://auth-p2.demo.inoerawan.id:8443 {
     }
     handle @login {
         reverse_proxy https://keycloak:8443 {
-            header_up Host auth-p2.demo.inoerawan.id
+            header_up Host login-dompet-identitas.demo.inoerawan.id
             transport http {
-                tls_server_name auth-p2.demo.inoerawan.id
+                tls_server_name login-dompet-identitas.demo.inoerawan.id
             }
         }
     }
@@ -30,7 +30,7 @@ https://auth-p2.demo.inoerawan.id:8443 {
         respond "Not found" 404
     }
 }
-https://wallet-p2.demo.inoerawan.id:8443 {
+https://dompet-identitas.demo.inoerawan.id:8443 {
     tls /tls/fullchain.pem /tls/privkey.pem
     header {
         Cache-Control no-store
@@ -59,7 +59,7 @@ https://wallet-p2.demo.inoerawan.id:8443 {
     }
 }
 
-https://issuer-p2.demo.inoerawan.id:8443 {
+https://lsp-nusantara.demo.inoerawan.id:8443 {
     tls /tls/fullchain.pem /tls/privkey.pem
     header {
         Cache-Control no-store
@@ -68,7 +68,7 @@ https://issuer-p2.demo.inoerawan.id:8443 {
     }
     reverse_proxy issuer-backend:8080
 }
-https://verifier-p2.demo.inoerawan.id:8443 {
+https://karya-instalasi.demo.inoerawan.id:8443 {
     tls /tls/fullchain.pem /tls/privkey.pem
     header {
         Cache-Control no-store
@@ -76,4 +76,36 @@ https://verifier-p2.demo.inoerawan.id:8443 {
         Referrer-Policy no-referrer
     }
     reverse_proxy company-backend:8080
+}
+
+# Legacy entry points preserve paths while sending visitors to the owning entity.
+https://wallet-p2.demo.inoerawan.id:8443 {
+    tls /tls/fullchain.pem /tls/privkey.pem
+    header Cache-Control no-store
+    header Referrer-Policy no-referrer
+    redir https://dompet-identitas.demo.inoerawan.id{uri} 308
+}
+
+# Legacy entry points preserve paths while sending visitors to the owning entity.
+https://auth-p2.demo.inoerawan.id:8443 {
+    tls /tls/fullchain.pem /tls/privkey.pem
+    header Cache-Control no-store
+    header Referrer-Policy no-referrer
+    redir https://login-dompet-identitas.demo.inoerawan.id{uri} 308
+}
+
+# Legacy entry points preserve paths while sending visitors to the owning entity.
+https://issuer-p2.demo.inoerawan.id:8443 {
+    tls /tls/fullchain.pem /tls/privkey.pem
+    header Cache-Control no-store
+    header Referrer-Policy no-referrer
+    redir https://lsp-nusantara.demo.inoerawan.id{uri} 308
+}
+
+# Legacy entry points preserve paths while sending visitors to the owning entity.
+https://verifier-p2.demo.inoerawan.id:8443 {
+    tls /tls/fullchain.pem /tls/privkey.pem
+    header Cache-Control no-store
+    header Referrer-Policy no-referrer
+    redir https://karya-instalasi.demo.inoerawan.id{uri} 308
 }

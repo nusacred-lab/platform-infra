@@ -57,7 +57,7 @@ def main():
         profiles['profiles']['competencyNegativeFixture'] = fixture
         profiles['profiles']['competencyWrongTypeFixture'] = dict(fixture, credentialConfigurationId='competency_wrong_type')
         profile_path.write_text(json.dumps(profiles, indent=2) + '\n')
-    write('credential-issuer-metadata.conf', {'issuerDisplay': [{'name': 'NusaCred Certification Lab (synthetic demo)', 'locale': 'en'}],
+    write('credential-issuer-metadata.conf', {'issuerDisplay': [{'name': 'LSP Teknik Ketenagalistrikan Nusantara (demo)', 'locale': 'en'}],
           'credentialConfigurations': {'competency_demo': {'format': 'dc+sd-jwt', 'scope': 'competency_demo', 'vct': 'vctBaseUrl',
           'credential_signing_alg_values_supported': ['ES256'], 'cryptographic_binding_methods_supported': ['jwk', 'did:jwk'],
           'proof_types_supported': {'jwt': {'proof_signing_alg_values_supported': ['ES256']}},
@@ -75,7 +75,7 @@ def main():
         (folder / '_features.conf').write_text(json.dumps({'enabledFeatures': ['wallet2-persistence'] if service == 'wallet' else [], 'disabledFeatures': []}))
     (runtime / 'walt/wallet/wallet-service.conf').write_text(json.dumps({'publicBaseUrl': 'http://wallet:7006'}))
     (runtime / 'walt/wallet/wallet2-persistence.conf').write_text(json.dumps({'jdbcUrl': 'jdbc:sqlite:/data/wallet2.db', 'driverClassName': 'org.sqlite.JDBC'}))
-    (runtime / 'walt/verifier/verifier-service.conf').write_text(json.dumps({'clientMetadata': {'client_name': 'NusaCred Company (synthetic demo)'}, 'urlPrefix': 'http://verifier:7004/verification-session', 'urlHost': 'openid4vp://authorize'}))
+    (runtime / 'walt/verifier/verifier-service.conf').write_text(json.dumps({'clientMetadata': {'client_name': 'PT Karya Instalasi Nusantara (demo)'}, 'urlPrefix': 'http://verifier:7004/verification-session', 'urlHost': 'openid4vp://authorize'}))
     (runtime / 'data').mkdir(exist_ok=True)
     (runtime / 'public-issuer.json').write_text(json.dumps({'identity': did, 'publicJwk': public,
         'profileId': 'competencyDemo', 'configurationId': 'competency_demo',
