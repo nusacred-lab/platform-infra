@@ -54,3 +54,16 @@ def admin_request(method,path,payload=None,token=None,form=False,mail=False):
 state=json.loads((RUNTIME/'installation.json').read_text())
 (RUNTIME/'credentials.json').write_text(json.dumps({'bootstrap':state['entities']['wallet']['bootstrap']}))
 (RUNTIME/'credentials.json').chmod(0o600)
+
+
+def direct_custodian_connection(timeout=10):
+    """Reach only this disposable container's internal listener, with no added host port."""
+    import http.client
+    import subprocess
+    container=P6_PROJECT+'-custodian-1'
+    project=subprocess.check_output(['docker','inspect','--format','{{index .Config.Labels "com.docker.compose.project"}}',container],text=True).strip()
+    if project!=P6_PROJECT:raise ValueError('Unexpected fault-test container owner')
+    networks=json.loads(subprocess.check_output(['docker','inspect','--format','{{json .NetworkSettings.Networks}}',container],text=True))
+    address=networks[P6_PROJECT+'_application']['IPAddress']
+    if not address:raise ValueError('Disposable application bridge address missing')
+    return http.client.HTTPConnection(address,8080,timeout=timeout)

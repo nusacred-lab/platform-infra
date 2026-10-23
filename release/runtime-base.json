@@ -1,0 +1,11 @@
+{
+  "schemaVersion": 1,
+  "image": "ghcr.io/nusacred-lab/competency-proof-jvm-runtime@sha256:ecbcd98b260eac22078f57b46422999409094325a44d5f12e2f0b8ac6de90a89",
+  "workflowCommit": "62f48c4331a694687833499038ea400c20cfb77a",
+  "workflowRef": "refs/heads/codex/p6-release",
+  "signerIdentity": "https://github.com/nusacred-lab/platform-infra/.github/workflows/runtime-base.yml@refs/heads/codex/p6-release",
+  "javaVersion": "21.0.13+9",
+  "caCertificates": "20260816ubuntu0.24.04.1",
+  "sourceArchiveSha256": "a535a1df9c6284d9618872984e026ae0352d1f7e9e0605425c0e6114f47351dd",
+  "runUrl": "https://github.com/nusacred-lab/platform-infra/actions/runs/39895357121"
+}

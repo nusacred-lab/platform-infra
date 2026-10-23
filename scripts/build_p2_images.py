@@ -18,6 +18,7 @@ def run(*args, cwd=None):
 def main():
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--runtime", type=Path, required=True)
+    parser.add_argument("--mail-only", action="store_true", help="Build only the checksum-pinned Mailpit source for P6")
     args = parser.parse_args()
     runtime = args.runtime.resolve()
     if "runtime" not in runtime.parts:
@@ -25,7 +26,7 @@ def main():
     runtime.mkdir(parents=True, exist_ok=True)
     root = Path(__file__).resolve().parents[1]
     images = json.loads((root / "p2/images.json").read_text())
-    for kind, version in (("keycloak", "26.8.1"), ("postgres", "18.6")):
+    for kind, version in (() if args.mail_only else (("keycloak", "26.8.1"), ("postgres", "18.6"))):
         run("docker", "build", "--build-arg", f"{kind.upper()}_IMAGE={images[kind]}",
             "-f", str(root / f"p2/Containerfile.{kind}"),
             "-t", f"competency-proof-p2-{kind}:{version}", str(root / "p2"))

@@ -12,6 +12,9 @@ concurrency:
   cancel-in-progress: false
 jobs:
   build:
+    permissions:
+      contents: read
+      packages: read
     strategy:
       fail-fast: false
       matrix:
@@ -54,7 +57,7 @@ jobs:
           distribution: temurin
           java-version: |
             17.0.20+1
-            21.0.12.1+1
+            21.0.13+9
       - name: Verify both Gradle wrappers
         run: |
           for source in source-application source-fork; do
@@ -64,11 +67,19 @@ jobs:
         if: matrix.kind == 'application'
         run: '"$ANDROID_HOME/cmdline-tools/latest/bin/sdkmanager" "platforms;android-37.0" "build-tools;37.0.0"'
       - run: python3 ci/install_tool.py trivy "$RUNNER_TEMP/tools"
-      - name: Build, scan and export without registry permissions
+      - name: Read the pinned common runtime without registry write privileges
+        env:
+          REGISTRY_TOKEN: ${{ github.token }}
+          REGISTRY_USER: ${{ github.actor }}
+        run: echo "$REGISTRY_TOKEN" | docker login ghcr.io --username "$REGISTRY_USER" --password-stdin
+      - name: Build, scan and export without registry write permissions
         env:
           KIND: ${{ matrix.kind }}
           GRADLE_USER_HOME: ${{ runner.temp }}/gradle-home
         run: python3 ci/p6/build.py "$KIND" --application source-application --fork source-fork --scanner "$RUNNER_TEMP/tools/trivy"
+      - name: Remove read-only registry credentials
+        if: always()
+        run: docker logout ghcr.io
       - uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9
         if: always()
         with:

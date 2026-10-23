@@ -120,15 +120,16 @@ def main():
     else:
         pins=json.loads((ROOT/'p2/images.json').read_text())
         image('postgres',ROOT/'p2',ROOT/'p2/Containerfile.postgres',infra_revision,'--build-arg','POSTGRES_IMAGE='+pins['postgres'])
-        image('keycloak-staff',ROOT/'p2',ROOT/'p2/Containerfile.keycloak',infra_revision,'--build-arg','KEYCLOAK_IMAGE='+pins['keycloak'])
+        runtime_pin=json.loads((ROOT/'release/runtime-base.json').read_text())['image']
+        image('keycloak-staff',ROOT/'p2',ROOT/'release/Containerfile.keycloak-temurin',infra_revision,'--build-arg','KEYCLOAK_IMAGE='+pins['keycloak'],'--build-arg','JVM_RUNTIME_IMAGE='+runtime_pin)
         base_id=subprocess.check_output(['docker','image','inspect','p6-build-keycloak-staff','--format','{{.Id}}'],text=True).strip()
         provider=Path(os.environ.get('RUNNER_TEMP','/tmp'))/'p6-provider'
         run('python3',app/'ci/build_keycloak_provider.py','--image',base_id,'--jdk',os.environ['JAVA_HOME'],'--output',provider)
         shutil.copyfile(provider/'provider-build.json',out/'provider-build.json')
-        image('keycloak-recovery',provider,ROOT/'p2/Containerfile.keycloak-recovery',infra_revision,'--build-arg','KEYCLOAK_IMAGE='+pins['keycloak'])
+        image('keycloak-recovery',provider,ROOT/'p2/Containerfile.keycloak-recovery',infra_revision,'--build-arg','KEYCLOAK_IMAGE=p6-build-keycloak-staff')
         image('edge',ROOT/'local-demo/caddy-build',ROOT/'local-demo/caddy-build/Dockerfile',infra_revision)
         # Reuse the checksum-pinned Mailpit source/frontend build; it also builds two pinned identity images.
-        run('python3',ROOT/'scripts/build_p2_images.py','--runtime',ROOT/'runtime/p6-build')
+        run('python3',ROOT/'scripts/build_p2_images.py','--runtime',ROOT/'runtime/p6-build','--mail-only')
         mail_source=ROOT/'runtime/p6-build/source/mailpit-4355c8cd7dbe745c6fc6ce8619d23a1a31b746c9'
         run(scanner,'fs','--include-dev-deps','--scanners','vuln','--list-all-pkgs','--severity','HIGH,CRITICAL','--exit-code','1',
             '--format','json','--output',out/'mail-source-scan.json',mail_source)
@@ -137,7 +138,7 @@ def main():
         mail=Path(os.environ.get('RUNNER_TEMP','/tmp'))/'p6-mail'
         mail.mkdir(exist_ok=True)
         image_id=subprocess.check_output(['docker','image','inspect',tag,'--format','{{.Id}}'],text=True).strip()
-        (mail/'Dockerfile').write_text('FROM '+image_id+'\n')
+        (mail/'Dockerfile').write_text('FROM competency-proof-p2-mailpit:1.31.5\n')
         image('mail',mail,mail/'Dockerfile',infra_revision)
     (out/'build.json').write_text(json.dumps(dict(schemaVersion=1,kind=a.kind,infrastructureRevision=infra_revision,
         sources=sources,images=images,scope='synthetic-isolated-demo-only',productionEligible=False),indent=2)+'\n')
