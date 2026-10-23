@@ -124,3 +124,31 @@ ZIP payload as the CI APK, and is byte-identical to the version-code 5 APK updat
 in place on the physical device. Biometric access and the existing credential
 were confirmed by the operator. This physical check used the existing demo
 backend; final registry-backend client walkthrough acceptance remains separate.
+
+## Legacy walkthrough activation and non-root migration
+
+The operator approved image-only P6 activation on the existing synthetic
+walkthrough after staging acceptance. The local stopped checkpoint covers all
+36 actual mounted sources, including external walkthrough volumes, bind-mounted
+wallet data, issuer keys, TLS, secrets, and the previous Compose environment and
+storage overlay. This is a private local checkpoint, not P7 off-host backup.
+
+Older installations can have configuration readable only by their previous UID.
+Before starting the non-root P6 images, keep the host runtime parent private
+(mode 0700), make only the mounted configuration/secret files container-readable,
+and align the wallet data directory/files with UID/GID 10001. The active legacy
+transition required staff database password files and protocol configuration to
+be readable within their private parent; wallet data retained mode 0700 with its
+owner changed to the P6 service UID. Secret/key contents were not regenerated.
+Do not open the runtime parent or run application services as root to bypass this.
+Take a stopped snapshot first and retain original ownership/modes for recovery.
+Fresh package preparation already creates container-readable config and scoped
+storage. Reusing a legacy installation requires checking its actual mount paths
+and ownership, rather than assuming the fresh-install permissions apply.
+
+After activation, all sixteen running service image identities matched the
+reviewed candidate. The existing mounts, eighteen durable logical tables and
+forty-nine mounted configuration/key files were unchanged. Eight wallet keys,
+eight credentials and three existing final results were retained. Public
+role/readiness checks passed. Final physical APK/browser walkthrough evidence
+is recorded separately; activation alone does not close G6 or establish G7.
