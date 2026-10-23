@@ -48,11 +48,12 @@ def main():
         ages = []
         for header, value in browser.last_headers:
             if header.lower() == 'set-cookie':
-                cookie = SimpleCookie();cookie.load(value)
+                cookie = SimpleCookie();cookie.load(value.split(';', 1)[0])
                 if '__Host-nusacred-session' in cookie:
-                    item = cookie['__Host-nusacred-session']
-                    ages.append(int(item['max-age']))
-                    check(entity+': opaque cookie remains Secure HttpOnly SameSite', bool(item['secure']) and bool(item['httponly']) and item['samesite'] == 'Lax')
+                    # Ignore Ktor's encoding extension while checking real cookie attributes.
+                    attrs = {part.strip().partition('=')[0].lower(): part.strip().partition('=')[2] for part in value.split(';')[1:]}
+                    ages.append(int(attrs['max-age']))
+                    check(entity+': opaque cookie remains Secure HttpOnly SameSite', 'secure' in attrs and 'httponly' in attrs and attrs.get('samesite') == 'Lax')
         check(entity+': browser cookie lasts one hour', len(ages) == 1 and 3570 <= ages[0] <= 3600)
         status, _, raw = browser.request(origin+'/api/v1/portal-session')
         session = json.loads(raw)
