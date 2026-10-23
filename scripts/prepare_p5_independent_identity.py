@@ -59,6 +59,8 @@ def split_realm(source, entity, realm_name, roles, client_id, secret):
                          if c["clientId"] not in business or c["clientId"] == client_id]
     client = next(c for c in target["clients"] if c["clientId"] == client_id)
     client["secret"] = secret
+    client.setdefault("attributes", {}).update({"access.token.lifespan": "3600",
+        "client.session.idle.timeout": "3600", "client.session.max.lifespan": "3600"})
     assert not client.get("directAccessGrantsEnabled")
     assert not client.get("serviceAccountsEnabled")
     target["roles"]["realm"] = [r for r in target["roles"]["realm"] if r["name"] in roles]

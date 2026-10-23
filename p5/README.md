@@ -41,7 +41,7 @@ Mount the reviewed `themes/nusacred` directory with the P5 overlay, then run
 The helper backs up current realm/client settings privately, selects the login
 theme and applies the approved five-minute access / 24-hour idle / seven-day max
 mobile policy. Refresh rotation remains enabled with zero reuse. Browser clients
-retain their shorter client-session limits; no offline access or direct password
+use an explicit one-hour access/idle/maximum override; no offline access or direct password
 grant is enabled. The existing guarded recovery flow and disabled account console
 remain intact. Theme inheritance preserves upstream authentication forms, actions,
 validation and password visibility; custom CSS/messages/footer provide wallet branding.
@@ -173,3 +173,18 @@ trust entries retain their identity/revision and display a missing-review notice
 a new approval attaches provenance. Issuer/company database migration 3 requires a
 consistent pre-migration checkpoint; old binaries need their matching old database
 snapshots for rollback. Retain only the current verified recovery checkpoint.
+
+
+## One-hour administrative web sessions
+
+Run `scripts/configure_p5_web_sessions.py --env-file <private-compose.env>
+--identity-runtime <private-wallet-identity-directory> --output <private-report.json>`
+against the independent composition. It authenticates to each exact IdP through
+verified loopback TLS, updates only its own BFF client's access/idle/max attributes
+to 3,600 seconds, and asserts that realm policy and all other client properties
+remain unchanged. The Android client remains at five-minute access, seven-day max
+and 24-hour idle. The helper reports previous non-secret timeout values for rollback;
+no secret, token or client representation is persisted. Pair it with application
+binaries that use the one-hour browser/cookie maximum. Existing sessions need a new
+login; backend restart also invalidates memory-only app sessions. No credential,
+key, role, user password, database schema or public route change is needed.

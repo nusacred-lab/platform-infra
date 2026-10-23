@@ -36,9 +36,9 @@ for c in clients:
     attributes=c.setdefault('attributes',{})
     native=c['clientId']=='android-wallet-p2'
     attributes['login_theme']={'issuer-bff-p2':'lsp-nusantara','company-bff-p2':'karya-instalasi'}.get(c['clientId'],'nusacred')
-    attributes.update({'client.session.idle.timeout':str(86400 if native else 1800),
+    attributes.update({'client.session.idle.timeout':str(86400 if native else 3600),
                        'client.session.max.lifespan':str(604800 if native else 3600)})
-    if native:attributes['access.token.lifespan']='300'
+    attributes['access.token.lifespan']='300' if native else '3600'
     assert request('PUT',base+'/clients/'+c['id'],c,token=token)[0]==204
 status,_,actual=request('GET',base,token=token);assert status==200
 assert all(actual[k]==v for k,v in settings.items())
