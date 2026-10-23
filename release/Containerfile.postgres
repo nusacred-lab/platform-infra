@@ -1,0 +1,5 @@
+ARG POSTGRES_IMAGE
+FROM ${POSTGRES_IMAGE}
+# Alpine backport fixes the musl regcomp overflow (CVE-2026-107891).
+RUN apk add --no-cache musl=1.2.6-r3 musl-utils=1.2.6-r3 && rm /usr/local/bin/gosu
+USER postgres

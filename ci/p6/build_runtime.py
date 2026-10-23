@@ -4,6 +4,7 @@ import hashlib,json,os
 from pathlib import Path
 import subprocess
 import sys
+from scan_gate import scan
 root=Path(__file__).resolve().parents[2]
 out=root/'out/runtime';out.mkdir(parents=True,exist_ok=False)
 scanner=Path(sys.argv[1]).resolve()
@@ -18,8 +19,8 @@ revision=os.environ['GITHUB_SHA'];tag='p6-build-jvm-runtime'
 subprocess.run(['docker','build','--platform','linux/amd64','--build-arg','SOURCE_REVISION='+revision,
  '-f',str(root/'release/Containerfile.jvm-runtime'),'-t',tag,str(root/'release')],check=True)
 image_id=subprocess.check_output(['docker','image','inspect',tag,'--format','{{.Id}}'],text=True).strip()
-subprocess.run([str(scanner),'image','--image-src','docker','--scanners','vuln','--list-all-pkgs','--severity','HIGH,CRITICAL',
- '--exit-code','1','--format','json','--output',str(out/'jvm-runtime-scan.json'),image_id],check=True)
+scan([str(scanner),'image','--image-src','docker','--scanners','vuln','--list-all-pkgs','--severity','HIGH,CRITICAL',
+ '--exit-code','1','--format','json','--output',str(out/'jvm-runtime-scan.json'),image_id])
 report=json.loads((out/'jvm-runtime-scan.json').read_text())
 if report['Metadata']['ImageID']!=image_id or not any(row.get('Packages') for row in report.get('Results',[])):
  raise SystemExit('Runtime scan coverage/identity missing')

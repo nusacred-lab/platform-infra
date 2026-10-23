@@ -4,6 +4,12 @@ import importlib.util
 import json
 from pathlib import Path
 import unittest
+import contextlib
+import io
+import subprocess
+import sys
+import tempfile
+from scan_gate import scan
 
 ROOT=Path(__file__).resolve().parents[2]
 spec=importlib.util.spec_from_file_location('installer',ROOT/'release/install.py')
@@ -55,5 +61,39 @@ class ReleasePolicyTest(unittest.TestCase):
                 self.assertNotIn('/var/run/docker.sock',json.dumps(service))
         self.assertEqual(compose['services']['protocol-access']['profiles'],['acceptance'])
         self.assertEqual(compose['services']['init-storage']['cap_add'],['CHOWN'])
+
+class ScannerHealthTest(unittest.TestCase):
+    def run_fixture(self, program, previous=False):
+        with tempfile.TemporaryDirectory() as directory:
+            report=Path(directory)/'scan.json'
+            if previous:report.write_text('{"Results": []}')
+            command=[sys.executable,'-c',program,'--severity','HIGH,CRITICAL','--output',str(report)]
+            with contextlib.redirect_stderr(io.StringIO()):
+                return scan(command)
+
+    @staticmethod
+    def fixture(findings=None, warning=''):
+        data={'SchemaVersion':2,'Results':[{'Packages':[{'Name':'fixture'}],'Vulnerabilities':findings or []}]}
+        return ('import json,sys;from pathlib import Path;'
+                'assert "UNKNOWN" in sys.argv[sys.argv.index("--severity")+1];'
+                'Path(sys.argv[sys.argv.index("--output")+1]).write_text('+repr(json.dumps(data))+');'
+                'sys.stderr.write('+repr(warning)+')')
+
+    def test_complete_clean_scan_succeeds(self):
+        self.assertEqual(self.run_fixture(self.fixture()).returncode,0)
+
+    def test_zero_exit_with_missing_vulnerability_details_is_rejected(self):
+        with self.assertRaisesRegex(RuntimeError,'details are incomplete'):
+            self.run_fixture(self.fixture(warning='WARN Unable to get vulnerability details (CVE may be rejected)'))
+
+    def test_zero_exit_with_unclassified_finding_is_rejected(self):
+        with self.assertRaisesRegex(RuntimeError,'unclassified'):
+            self.run_fixture(self.fixture([{'Severity':'UNKNOWN','VulnerabilityID':'CVE-fixture'}]))
+
+    def test_failed_or_missing_scan_cannot_reuse_old_clean_report(self):
+        with self.assertRaises(subprocess.CalledProcessError):
+            self.run_fixture('import sys;sys.exit(7)',previous=True)
+        with self.assertRaises(FileNotFoundError):
+            self.run_fixture('pass',previous=True)
 
 if __name__=='__main__':unittest.main()

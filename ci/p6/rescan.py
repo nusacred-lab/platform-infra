@@ -6,6 +6,7 @@ import json
 import os
 from pathlib import Path
 import subprocess
+from scan_gate import scan
 
 root=Path(__file__).resolve().parents[2]
 spec=importlib.util.spec_from_file_location('installer',root/'release/install.py')
@@ -27,9 +28,16 @@ if not 0<=age<86400:raise SystemExit('Scanner database unhealthy')
 results=[]
 for name,row in manifest['images'].items():
     report=a.output/(name+'.json')
-    status=subprocess.run([str(a.scanner.resolve()),'image','--image-src','remote','--scanners','vuln','--list-all-pkgs',
-        '--severity','HIGH,CRITICAL','--exit-code','1','--format','json','--output',str(report),row['image']],env=env).returncode
-    data=json.loads(report.read_text()) if report.exists() else {}
+    try:
+        scan([str(a.scanner.resolve()),'image','--image-src','remote','--scanners','vuln','--list-all-pkgs',
+            '--severity','HIGH,CRITICAL','--exit-code','1','--format','json','--output',str(report),row['image']],env=env)
+        status=0
+    except (subprocess.CalledProcessError, RuntimeError, ValueError, OSError):
+        status=1
+    try:
+        data=json.loads(report.read_text()) if report.exists() else {}
+    except ValueError:
+        data={}
     covered=any(r.get('Packages') for r in data.get('Results',[]))
     results.append({'image':row['image'],'name':name,'passed':status==0 and covered})
 (a.output/'result.json').write_text(json.dumps({'releaseWorkflowCommit':manifest['workflow']['commit'],

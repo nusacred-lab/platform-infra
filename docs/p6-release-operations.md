@@ -63,3 +63,21 @@ the complete source tree and final image must pass the fresh scanner gate.
 The existing P2 source pin remains unchanged. The P6 recipe replaces the entire
 Mailpit binary and embedded frontend while retaining the reviewed minimal OS/CA
 layer, and compiles with the pinned Go 1.27.3 toolchain.
+
+## Scanner completeness and Alpine security backport
+
+Candidate infrastructure commit `9eff88c` is **quarantined**. A remote rescan
+revealed Trivy could exit zero after warning that vulnerability details for
+`CVE-2026-107891` were unavailable. Its severity filter omitted the unclassified
+musl finding; a zero High/Critical count was insufficient evidence of health.
+Do not promote that candidate or treat its functional staging results as G6.
+
+The replacement PostgreSQL and Mailpit recipes pin Alpine's `musl` and
+`musl-utils` security backport `1.2.6-r3`, following the
+[Alpine security release](https://wwwtest.alpinelinux.org/posts/Alpine-3.21.9-3.22.7-3.23.7-3.24.3-released.html)
+and [upstream advisory](https://seclists.org/oss-sec/2026/q4/289).
+The P2 baseline recipe remains unchanged. P6 gates now include UNKNOWN severity,
+reject missing vulnerability details even after exit zero, retain scanner stderr,
+and remove an old report before rescanning. Regression tests cover this exact
+false-success condition and stale-report reuse. The daily scanner applies the
+same gate; no CVE ignore or exception was added.

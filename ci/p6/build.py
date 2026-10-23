@@ -12,10 +12,14 @@ import shutil
 import subprocess
 import sys
 from datetime import datetime, timezone
+from scan_gate import scan
 
 ROOT = Path(__file__).resolve().parents[2]
+SCANNER = None
 
 def run(*args, cwd=ROOT, **kwargs):
+    if SCANNER is not None and str(args[0]) == str(SCANNER) and '--scanners' in args and 'vuln' in args:
+        return scan(args, cwd=cwd, **kwargs)
     return subprocess.run(list(map(str, args)), cwd=cwd, check=True, **kwargs)
 
 def sha(path):
@@ -26,6 +30,7 @@ def sha(path):
     return h.hexdigest()
 
 def main():
+    global SCANNER
     p = argparse.ArgumentParser(description=__doc__)
     p.add_argument('kind', choices=['application', 'fork', 'infrastructure'])
     p.add_argument('--application', type=Path, required=True)
@@ -41,6 +46,7 @@ def main():
     out = ROOT/'out'/a.kind
     out.mkdir(parents=True, exist_ok=False)
     scanner = a.scanner.resolve()
+    SCANNER = scanner
     os.environ['TRIVY_CACHE_DIR'] = str(Path(os.environ.get('RUNNER_TEMP', '/tmp'))/'p6-trivy')
     run(scanner, 'image', '--download-db-only')
     metadata = Path(os.environ['TRIVY_CACHE_DIR'])/'db/metadata.json'
@@ -119,7 +125,7 @@ def main():
                 '--build-arg','SERVICE='+service)
     else:
         pins=json.loads((ROOT/'p2/images.json').read_text())
-        image('postgres',ROOT/'p2',ROOT/'p2/Containerfile.postgres',infra_revision,'--build-arg','POSTGRES_IMAGE='+pins['postgres'])
+        image('postgres',ROOT/'p2',ROOT/'release/Containerfile.postgres',infra_revision,'--build-arg','POSTGRES_IMAGE='+pins['postgres'])
         runtime_pin=json.loads((ROOT/'release/runtime-base.json').read_text())['image']
         image('keycloak-staff',ROOT/'p2',ROOT/'release/Containerfile.keycloak-temurin',infra_revision,'--build-arg','KEYCLOAK_IMAGE='+pins['keycloak'],'--build-arg','JVM_RUNTIME_IMAGE='+runtime_pin)
         base_id=subprocess.check_output(['docker','image','inspect','p6-build-keycloak-staff','--format','{{.Id}}'],text=True).strip()
