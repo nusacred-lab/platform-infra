@@ -1,0 +1,6 @@
+{
+  "version": "1.32.0",
+  "commit": "ce798cfd781ef07b321427fc5082b3eebdcae460",
+  "archiveSha256": "b5dc76ca9e94c563f74042980e375f42f93168f0d1172c02782d3bfadfbd3f75",
+  "containerfile": "release/Containerfile.mailpit"
+}

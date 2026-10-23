@@ -1,0 +1,12 @@
+# Reviewed Ubuntu 24.04 base plus checksum-pinned Temurin October security release.
+FROM docker.io/library/eclipse-temurin@sha256:da0f0d242bec39e3fe5c1ac4c415840f03be9cef848c243d723166708e02148c
+ADD --checksum=sha256:a535a1df9c6284d9618872984e026ae0352d1f7e9e0605425c0e6114f47351dd https://github.com/adoptium/temurin21-binaries/releases/download/jdk-21.0.13%2B9/OpenJDK21U-jre_x64_linux_hotspot_21.0.13_9.tar.gz /tmp/temurin-jre.tar.gz
+RUN mkdir /opt/java/p6 && tar -xzf /tmp/temurin-jre.tar.gz --strip-components=1 -C /opt/java/p6 \
+    && rm -rf /opt/java/openjdk && mv /opt/java/p6 /opt/java/openjdk && rm /tmp/temurin-jre.tar.gz \
+    && apt-get update && apt-get install -y --no-install-recommends ca-certificates=20260816ubuntu0.24.04.1 \
+    && rm -rf /var/lib/apt/lists/* && java -version
+ARG SOURCE_REVISION
+LABEL org.opencontainers.image.source="https://github.com/nusacred-lab/platform-infra"
+LABEL org.opencontainers.image.revision="${SOURCE_REVISION}"
+LABEL org.nusacred.scope="synthetic-isolated-demo-only"
+USER 10001:10001

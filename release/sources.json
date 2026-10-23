@@ -1,0 +1,11 @@
+{
+  "schemaVersion": 1,
+  "application": {
+    "repository": "nusacred-lab/competency-proof",
+    "commit": "00899ca156e7bef0af060d9872ffe693ef6d772a"
+  },
+  "fork": {
+    "repository": "nusacred-lab/waltid-identity",
+    "commit": "5fb528c5c02b70491bd5a98195db0e2b285c2c47"
+  }
+}

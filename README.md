@@ -38,3 +38,11 @@ Public login and the signed Android certificate association are active. The
 credential/recovery public override was explicitly approved and is active;
 physical scan, recovery, fresh-install presentation and bounded-session tests
 passed. Production and operations gates remain separate.
+
+## P6 image distribution and Compose installation
+
+The [release package](release/README.md) provides source-free, digest-pinned
+installation. Its [release workflow](.github/workflows/release.yml) builds/scans
+application, fork and supporting images on GitHub, then signs and publishes
+synthetic candidate images to GHCR. G6 acceptance and P7 deployment remain
+separate gates.
