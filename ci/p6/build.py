@@ -128,17 +128,18 @@ def main():
         shutil.copyfile(provider/'provider-build.json',out/'provider-build.json')
         image('keycloak-recovery',provider,ROOT/'p2/Containerfile.keycloak-recovery',infra_revision,'--build-arg','KEYCLOAK_IMAGE=p6-build-keycloak-staff')
         image('edge',ROOT/'local-demo/caddy-build',ROOT/'local-demo/caddy-build/Dockerfile',infra_revision)
-        # Reuse the checksum-pinned Mailpit source/frontend build; it also builds two pinned identity images.
-        run('python3',ROOT/'scripts/build_p2_images.py','--runtime',ROOT/'runtime/p6-build','--mail-only')
-        mail_source=ROOT/'runtime/p6-build/source/mailpit-4355c8cd7dbe745c6fc6ce8619d23a1a31b746c9'
+        mail_pin=json.loads((ROOT/'release/mail-source.json').read_text())
+        run('python3',ROOT/'scripts/build_p2_images.py','--runtime',ROOT/'runtime/p6-build','--mail-only',
+            '--mail-pin',ROOT/'release/mail-source.json')
+        mail_source=ROOT/'runtime/p6-build/source'/('mailpit-'+mail_pin['commit'])
         run(scanner,'fs','--include-dev-deps','--scanners','vuln','--list-all-pkgs','--severity','HIGH,CRITICAL','--exit-code','1',
             '--format','json','--output',out/'mail-source-scan.json',mail_source)
-        tag='competency-proof-p2-mailpit:1.31.5'
+        tag='competency-proof-p2-mailpit:'+mail_pin['version']
         # Export the already built Mailpit using an exact image-only wrapper; no source recompilation.
         mail=Path(os.environ.get('RUNNER_TEMP','/tmp'))/'p6-mail'
         mail.mkdir(exist_ok=True)
         image_id=subprocess.check_output(['docker','image','inspect',tag,'--format','{{.Id}}'],text=True).strip()
-        (mail/'Dockerfile').write_text('FROM competency-proof-p2-mailpit:1.31.5\n')
+        (mail/'Dockerfile').write_text('FROM '+tag+'\n')
         image('mail',mail,mail/'Dockerfile',infra_revision)
     (out/'build.json').write_text(json.dumps(dict(schemaVersion=1,kind=a.kind,infrastructureRevision=infra_revision,
         sources=sources,images=images,scope='synthetic-isolated-demo-only',productionEligible=False),indent=2)+'\n')

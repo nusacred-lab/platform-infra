@@ -51,3 +51,15 @@ account-to-wallet mappings and credential bytes. Downgrading an incompatible
 schema is forbidden; restore a complete consistent stopped snapshot. APK version
 rollback is constrained by Android version codes and signing identity. No cloud
 service or public tunnel is required for package acceptance.
+
+## Mail capture source update
+
+P6 pins Mailpit 1.32.0 at `ce798cfd781ef07b321427fc5082b3eebdcae460`,
+including DOMPurify 3.4.17. The previous 1.31.5 source scan failed closed on
+[GHSA-cg2g-xh64-v4q7](https://github.com/advisories/GHSA-cg2g-xh64-v4q7)
+and [GHSA-mrv2-3pqr-j5jr](https://github.com/advisories/GHSA-mrv2-3pqr-j5jr).
+`release/mail-source.json` binds the source archive checksum and recipe; both
+the complete source tree and final image must pass the fresh scanner gate.
+The existing P2 source pin remains unchanged. The P6 recipe replaces the entire
+Mailpit binary and embedded frontend while retaining the reviewed minimal OS/CA
+layer, and compiles with the pinned Go 1.27.3 toolchain.
