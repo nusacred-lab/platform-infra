@@ -1,0 +1,66 @@
+name: P6 patched JVM runtime
+on:
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  build:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
+        with:
+          fetch-depth: 0
+          persist-credentials: false
+      - run: python3 ci/check_policy.py
+      - run: python3 ci/install_tool.py gitleaks "$RUNNER_TEMP/tools"
+      - run: '"$RUNNER_TEMP/tools/gitleaks" git . --redact --no-banner'
+      - run: python3 ci/install_tool.py trivy "$RUNNER_TEMP/tools"
+      - run: python3 ci/p6/build_runtime.py "$RUNNER_TEMP/tools/trivy"
+      - uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9
+        if: always()
+        with:
+          name: p6-runtime-build
+          path: out/runtime/
+          compression-level: 0
+          retention-days: 7
+          if-no-files-found: error
+  publish:
+    if: github.event_name != 'pull_request' && github.repository == 'nusacred-lab/platform-infra' && (github.ref == 'refs/heads/main' || github.ref == 'refs/heads/codex/p6-release')
+    needs: build
+    runs-on: ubuntu-24.04
+    timeout-minutes: 15
+    permissions:
+      contents: read
+      packages: write
+      id-token: write
+      attestations: write
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
+        with:
+          persist-credentials: false
+      - uses: actions/download-artifact@9000827ccba6bdab643e8b6fd33ac0654aef8333
+        with:
+          name: p6-runtime-build
+          path: candidate/
+      - uses: sigstore/cosign-installer@b9c35392b7c1401bcc77d30c9b07cf4b1c7a7b07
+        with:
+          cosign-release: v3.1.3
+      - name: Authenticate the candidate registry
+        env:
+          REGISTRY_TOKEN: ${{ github.token }}
+          REGISTRY_USER: ${{ github.actor }}
+        run: echo "$REGISTRY_TOKEN" | docker login ghcr.io --username "$REGISTRY_USER" --password-stdin
+      - run: python3 ci/p6/publish.py candidate
+      - uses: actions/attest-build-provenance@9d57eef8c06cd9d6b433effeeb7a6a77b3ff94ad
+        with:
+          subject-path: candidate/published.json
+      - uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9
+        with:
+          name: p6-runtime-published
+          path: candidate/
+          retention-days: 30
+          if-no-files-found: error
+      - name: Remove registry credentials
+        if: always()
+        run: docker logout ghcr.io

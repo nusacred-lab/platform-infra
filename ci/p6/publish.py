@@ -12,7 +12,10 @@ build=json.loads((folder/'build.json').read_text())
 revision=os.environ['GITHUB_SHA']
 if build['infrastructureRevision']!=revision or build['scope']!='synthetic-isolated-demo-only':
     raise SystemExit('Candidate belongs to another workflow/source')
-identity='https://github.com/nusacred-lab/platform-infra/.github/workflows/release.yml@'+os.environ['GITHUB_REF']
+workflow=os.environ['GITHUB_WORKFLOW_REF']
+allowed={'nusacred-lab/platform-infra/.github/workflows/'+name+'@'+os.environ['GITHUB_REF'] for name in ['release.yml','runtime-base.yml']}
+if workflow not in allowed:raise SystemExit('Unexpected publication workflow')
+identity='https://github.com/'+workflow
 for row in build['images']:
     name=row['name']
     archive=folder/(name+'.tar')

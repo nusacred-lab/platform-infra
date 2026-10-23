@@ -14,10 +14,10 @@ for path in Path(".github/workflows").glob("*.y*ml"):
     for action in re.findall(r"uses:\s*([^\s#]+)", source):
         if not re.fullmatch(r"[\w.-]+/[\w./-]+@[a-f0-9]{40}", action):
             failures.append("Unpinned action: " + str(path))
-    release = path.name == "release.yml"
+    release = path.name in {"release.yml", "runtime-base.yml"}
     if release:
         jobs = re.findall(r"^  ([a-z][a-z-]*):\n(.*?)(?=^  [a-z][a-z-]*:|\Z)", source.split("jobs:",1)[-1], re.M | re.S)
-        if {name for name, body in jobs} != {"build", "publish", "assemble"}:
+        if {name for name, body in jobs} != ({"build", "publish", "assemble"} if path.name == "release.yml" else {"build", "publish"}):
             failures.append("Unexpected release jobs")
         gate = "github.event_name != 'pull_request' && github.repository == 'nusacred-lab/platform-infra' && (github.ref == 'refs/heads/main' || github.ref == 'refs/heads/codex/p6-release')"
         for name, body in jobs:
