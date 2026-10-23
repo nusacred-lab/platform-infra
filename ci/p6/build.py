@@ -60,8 +60,10 @@ def main():
         run('python3', 'ci/test-supply-chain-controls.py', gitleaks, cwd=fork)
     else:
         run(gitleaks, 'git', '.', '--redact', '--no-banner', cwd=target)
+    # Each source checkout has its own complete source scan in its own build group.
+    exclusions = ['--skip-dirs', 'source-application', '--skip-dirs', 'source-fork'] if a.kind == 'infrastructure' else []
     run(scanner, 'fs', '--include-dev-deps', '--scanners', 'vuln', '--list-all-pkgs', '--severity', 'HIGH,CRITICAL',
-        '--exit-code', '1', '--format', 'json', '--output', out/'source-scan.json', target)
+        '--exit-code', '1', '--format', 'json', '--output', out/'source-scan.json', *exclusions, target)
     images = []
     infra_revision = subprocess.check_output(['git', 'rev-parse', 'HEAD'], cwd=ROOT, text=True).strip()
 
@@ -127,6 +129,9 @@ def main():
         image('edge',ROOT/'local-demo/caddy-build',ROOT/'local-demo/caddy-build/Dockerfile',infra_revision)
         # Reuse the checksum-pinned Mailpit source/frontend build; it also builds two pinned identity images.
         run('python3',ROOT/'scripts/build_p2_images.py','--runtime',ROOT/'runtime/p6-build')
+        mail_source=ROOT/'runtime/p6-build/source/mailpit-4355c8cd7dbe745c6fc6ce8619d23a1a31b746c9'
+        run(scanner,'fs','--include-dev-deps','--scanners','vuln','--list-all-pkgs','--severity','HIGH,CRITICAL','--exit-code','1',
+            '--format','json','--output',out/'mail-source-scan.json',mail_source)
         tag='competency-proof-p2-mailpit:1.31.5'
         # Export the already built Mailpit using an exact image-only wrapper; no source recompilation.
         mail=Path(os.environ.get('RUNNER_TEMP','/tmp'))/'p6-mail'

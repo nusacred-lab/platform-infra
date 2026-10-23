@@ -16,6 +16,8 @@ class ReleasePolicyTest(unittest.TestCase):
         self.manifest=dict(schemaVersion=1,scope='synthetic-isolated-demo-only',productionEligible=False,
             infrastructureRevision=self.commit,workflow=dict(repository='nusacred-lab/platform-infra',path='.github/workflows/release.yml',commit=self.commit,ref=self.ref),
             sources=dict(application=dict(repository='nusacred-lab/competency-proof',commit='b'*40),fork=dict(repository='nusacred-lab/waltid-identity',commit='c'*40)),images={})
+        self.manifest['schemas']={'custodianRegistry':5,'businessMigrations':3,'policyVersion':'competency-v1'}
+        self.manifest['apk']={'sourceRevision':'b'*40,'applicationId':'id.nusacred.wallet','versionCode':5,'versionName':'0.6.0-p6','unsignedSha256':'f'*64}
         for name in installer.KINDS:
             revision='b'*40 if name in ('custodian','issuer','company') else 'c'*40 if name.startswith('walt-') else self.commit
             self.manifest['images'][name]=dict(image='ghcr.io/nusacred-lab/competency-proof-'+name+'@sha256:'+'d'*64,
@@ -35,6 +37,12 @@ class ReleasePolicyTest(unittest.TestCase):
             with self.subTest(field=field,value=value), self.assertRaises(ValueError):installer.validate_manifest(candidate,self.commit,self.ref)
         del self.manifest['images']['edge']
         with self.assertRaises(ValueError):installer.validate_manifest(self.manifest,self.commit,self.ref)
+
+    def test_reject_unknown_schema_and_unbound_apk(self):
+        for section, field, value in [('schemas','custodianRegistry',6),('apk','sourceRevision','e'*40),('apk','unsignedSha256',''),('apk','versionCode',4)]:
+            candidate=copy.deepcopy(self.manifest);candidate[section][field]=value
+            with self.subTest(section=section,field=field),self.assertRaises(ValueError):
+                installer.validate_manifest(candidate,self.commit,self.ref)
 
     def test_compose_has_no_build_external_network_or_public_admin(self):
         compose=json.loads((ROOT/'release/compose.yaml').read_text())

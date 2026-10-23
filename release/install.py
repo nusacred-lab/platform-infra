@@ -46,6 +46,12 @@ def validate_manifest(manifest,commit,ref):
             raise ValueError('Mixed source revision')
     if manifest['sources']['application']['repository']!='nusacred-lab/competency-proof' or manifest['sources']['fork']['repository']!='nusacred-lab/waltid-identity':
         raise ValueError('Untrusted source repository')
+    if manifest.get('schemas') != {'custodianRegistry':5,'businessMigrations':3,'policyVersion':'competency-v1'}:
+        raise ValueError('Unsupported schema compatibility contract')
+    apk=manifest.get('apk',{})
+    if (apk.get('sourceRevision') != manifest['sources']['application']['commit'] or apk.get('applicationId')!='id.nusacred.wallet' or
+            apk.get('versionCode')!=5 or apk.get('versionName')!='0.6.0-p6' or not re.fullmatch('[a-f0-9]{64}',apk.get('unsignedSha256',''))):
+        raise ValueError('APK/source binding is missing or inconsistent')
     return identity
 
 def verify(manifest_path,commit,ref):
@@ -69,7 +75,22 @@ def env_read(path):
     return dict(line.split('=',1) for line in path.read_text().splitlines() if line and not line.startswith('#'))
 
 def compose(env_path,*args):
-    run('docker','compose','--env-file',env_path,'-f',ROOT/'compose.yaml',*args)
+    # Host shell variables must not silently override the verified env-file pins/project.
+    clean={k:v for k,v in os.environ.items() if not k.startswith(('P6_','COMPOSE_'))}
+    run('docker','compose','--env-file',env_path,'-f',ROOT/'compose.yaml',*args,env=clean)
+
+def check_runtime(runtime):
+    manifest_path=runtime/'release-manifest.json'
+    if checksum(manifest_path)!=json.loads((runtime/'verified-release.json').read_text())['manifestSha256']:
+        raise ValueError('Manifest changed since verification')
+    manifest=json.loads(manifest_path.read_text())
+    env=env_read(runtime/'compose.env')
+    for name,row in manifest['images'].items():
+        if env.get('P6_'+name.upper().replace('-','_')+'_IMAGE')!=row['image']:
+            raise ValueError('Runtime image pin changed: '+name)
+    if env['P6_PROJECT_NAME']!=json.loads((runtime/'installation.json').read_text())['project'] or env['P6_RUNTIME']!=str(runtime):
+        raise ValueError('Runtime/project identity changed')
+    return manifest
 
 def prepare(runtime,manifest,manifest_path,certificate=None,project='competency-proof-p6'):
     if 'runtime' not in runtime.parts or any(c.isspace() for c in str(runtime)) or not re.fullmatch('[a-z0-9][a-z0-9_-]{1,50}',project):
@@ -185,9 +206,7 @@ def request(runtime,domain,method,path,body=None,token=None,form=False):
     finally:connection.close()
 
 def start(runtime):
-    manifest_path=runtime/'release-manifest.json'
-    if checksum(manifest_path)!=json.loads((runtime/'verified-release.json').read_text())['manifestSha256']:
-        raise ValueError('Manifest changed since verification')
+    check_runtime(runtime)
     env=runtime/'compose.env'
     compose(env,'config','--quiet')
     compose(env,'up','-d','--no-build','private-access','mail')
@@ -239,6 +258,8 @@ def main():
         manifest=verify(a.manifest.resolve(),a.trusted_commit,a.trusted_ref)
         if a.command=='prepare':prepare(runtime,manifest,a.manifest.resolve(),a.certificate_directory,a.project)
     elif a.command=='up':start(runtime)
-    else:compose(runtime/'compose.env','pull')
+    else:
+        check_runtime(runtime)
+        compose(runtime/'compose.env','pull')
 
 if __name__=='__main__':main()
