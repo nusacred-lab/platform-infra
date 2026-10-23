@@ -62,6 +62,7 @@ def main():
     tunnel_config = sub.add_parser("configure-tunnel")
     tunnel_config.add_argument("--include-p2", action="store_true",
                                help="Add the two P2 TLS forwards after owner approval of public login")
+    tunnel_config.add_argument("--include-entities", action="store_true", help="Include the reviewed independent organization domains")
     sub.add_parser("tunnel")
     for name in ("up", "down", "validate", "check"):
         sub.add_parser(name)
@@ -141,6 +142,10 @@ def main():
                   "  ServerAliveInterval 30", "  ServerAliveCountMax 3", "  ExitOnForwardFailure yes",
                   "  LogLevel ERROR"]
         hosts = HOSTS + (["auth-p2.demo.inoerawan.id", "wallet-p2.demo.inoerawan.id"] if args.include_p2 else [])
+        if args.include_entities:
+            hosts += ["lsp-nusantara.demo.inoerawan.id", "dompet-identitas.demo.inoerawan.id",
+                      "login-dompet-identitas.demo.inoerawan.id", "karya-instalasi.demo.inoerawan.id",
+                      "login-lsp-nusantara.demo.inoerawan.id", "login-karya-instalasi.demo.inoerawan.id"]
         for host in hosts:
             config.append(f"  RemoteForward tls//{host}:1 127.0.0.1:8443")
         (RUNTIME / "ssh/config").write_text("\n".join(config) + "\n")
@@ -149,7 +154,7 @@ def main():
         if (RUNTIME / "proxy/certificate-mode").read_text().strip() != "acme":
             raise SystemExit("Install a public certificate before starting the tunnel.")
         config = (RUNTIME / "ssh/config").read_text()
-        token = re.search(r"^\s*User\s+(\S+)", config, re.MULTILINE).group(1)
+        token = re.search(r"^\s*User\s+(\S+)", config, re.MULTILINE).group(1).removesuffix("+force")
         print("Verify the SSH host fingerprint on the first connection. Ctrl-C stops the tunnel.")
         while True:
             try:

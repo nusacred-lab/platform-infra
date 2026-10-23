@@ -1,0 +1,33 @@
+# Private identity backchannel only; never imported by the public ingress.
+https://login-dompet-identitas.demo.inoerawan.id:8443 {
+    tls /tls/fullchain.pem /tls/privkey.pem
+    header Cache-Control no-store
+    reverse_proxy https://keycloak:8443 {
+        header_up Host login-dompet-identitas.demo.inoerawan.id
+        transport http {
+            tls_server_name login-dompet-identitas.demo.inoerawan.id
+        }
+    }
+}
+
+https://login-lsp-nusantara.demo.inoerawan.id:8443 {
+    tls /tls/fullchain.pem /tls/privkey.pem
+    header Cache-Control no-store
+    reverse_proxy https://issuer-keycloak:8443 {
+        header_up Host login-lsp-nusantara.demo.inoerawan.id
+        transport http {
+            tls_server_name login-lsp-nusantara.demo.inoerawan.id
+        }
+    }
+}
+
+https://login-karya-instalasi.demo.inoerawan.id:8443 {
+    tls /tls/fullchain.pem /tls/privkey.pem
+    header Cache-Control no-store
+    reverse_proxy https://company-keycloak:8443 {
+        header_up Host login-karya-instalasi.demo.inoerawan.id
+        transport http {
+            tls_server_name login-karya-instalasi.demo.inoerawan.id
+        }
+    }
+}

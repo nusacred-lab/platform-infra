@@ -1,0 +1,175 @@
+# Synthetic P5 preview: exact public UI, authentication and wallet contract routes only.
+{
+    admin off
+    auto_https off
+    servers {
+        protocols h1 h2
+    }
+}
+# Cache only successful, public content-addressed assets. HTML, APIs and login
+# retain no-store, including errors whose paths resemble asset names.
+(portal-delivery) {
+    @publicAssets {
+        method GET HEAD
+        path_regexp publicAsset ^/([a-f0-9]{20}\.wasm|(web-portals|portal-boot)-[a-f0-9]{20}\.js)$
+    }
+    header @publicAssets Cache-Control "public, max-age=31536000, immutable" {
+        match status 200 206 304
+    }
+    encode @publicAssets zstd gzip
+}
+https://login-dompet-identitas.demo.inoerawan.id:8443 {
+    tls /tls/fullchain.pem /tls/privkey.pem
+    header {
+        Cache-Control no-store
+        Referrer-Policy no-referrer
+        X-Content-Type-Options nosniff
+        -Server
+    }
+    @login {
+        method GET HEAD POST
+        path /realms/competency-proof-p2/.well-known/openid-configuration /realms/competency-proof-p2/protocol/openid-connect/auth /realms/competency-proof-p2/protocol/openid-connect/token /realms/competency-proof-p2/protocol/openid-connect/certs /realms/competency-proof-p2/protocol/openid-connect/revoke /realms/competency-proof-p2/login-actions/authenticate /realms/competency-proof-p2/login-actions/restart /realms/competency-proof-p2/login-actions/reset-credentials /realms/competency-proof-p2/login-actions/action-token /realms/competency-proof-p2/login-actions/required-action /realms/competency-proof-p2/login-actions/execute-actions /resources/*
+    }
+    handle @login {
+        reverse_proxy https://keycloak:8443 {
+            header_up Host login-dompet-identitas.demo.inoerawan.id
+            transport http {
+                tls_server_name login-dompet-identitas.demo.inoerawan.id
+            }
+        }
+    }
+    handle {
+        respond "Not found" 404
+    }
+}
+https://dompet-identitas.demo.inoerawan.id:8443 {
+    import portal-delivery
+    tls /tls/fullchain.pem /tls/privkey.pem
+    header {
+        Cache-Control no-store
+        Referrer-Policy no-referrer
+        X-Content-Type-Options nosniff
+        -Server
+    }
+    @walletLink path /receive /present
+    handle @walletLink {
+        header Content-Type "text/html; charset=utf-8"
+        respond "<!doctype html><html lang='en'><meta name='viewport' content='width=device-width,initial-scale=1'><title>Open NusaCred Wallet</title><body style='margin:0;background:#f5f6f2;color:#183331;font:16px/1.6 system-ui'><main style='max-width:520px;margin:12vh auto;padding:32px'><p style='color:#087b69;font-weight:700'>NusaCred</p><h1>Continue in your wallet.</h1><p>Open this link on your Android phone with NusaCred Wallet installed. You will review the recipient and credential before approving anything.</p><p>If you are using a computer, scan the QR code with the wallet scanner.</p><a style='color:#087b69' href='https://github.com/nusacred-lab/competency-proof/releases'>Get NusaCred Wallet</a><p style='font-size:12px'>Synthetic demonstration · No information is shared from this page.</p></main></body></html>" 200
+    }
+    handle /.well-known/assetlinks.json {
+        root * /app-links
+        file_server
+    }
+    @login {
+        method GET HEAD POST
+        path / /index.html /web-portals.js /web-portals.js.map /portal-boot-*.js /web-portals-*.js /*.wasm /composeResources/* /auth/native/start /auth/native/session /api/v1/sessions/renew /auth/start /auth/callback /auth/account /auth/me /auth/logout /api/v1/wallet/provision /api/v1/wallet/reconcile /api/v1/wallet/credentials /api/v1/wallet/preview /api/v1/wallet/present /api/v1/wallet/credentials/* /api/v1/me /api/v1/portal-config /api/v1/portal-session /api/v1/service-status /api/v1/exchange-contexts /api/v1/exchange-contexts/* /api/v1/operations/*
+    }
+    handle @login {
+        reverse_proxy custodian:8080
+    }
+    handle {
+        respond "Not found" 404
+    }
+}
+
+https://lsp-nusantara.demo.inoerawan.id:8443 {
+    import portal-delivery
+    tls /tls/fullchain.pem /tls/privkey.pem
+    header {
+        Cache-Control no-store
+        X-Content-Type-Options nosniff
+        Referrer-Policy no-referrer
+    }
+    reverse_proxy issuer-backend:8080
+}
+https://karya-instalasi.demo.inoerawan.id:8443 {
+    import portal-delivery
+    tls /tls/fullchain.pem /tls/privkey.pem
+    header {
+        Cache-Control no-store
+        X-Content-Type-Options nosniff
+        Referrer-Policy no-referrer
+    }
+    reverse_proxy company-backend:8080
+}
+
+# Legacy entry points preserve paths while sending visitors to the owning entity.
+https://wallet-p2.demo.inoerawan.id:8443 {
+    tls /tls/fullchain.pem /tls/privkey.pem
+    header Cache-Control no-store
+    header Referrer-Policy no-referrer
+    redir https://dompet-identitas.demo.inoerawan.id{uri} 308
+}
+
+# Legacy entry points preserve paths while sending visitors to the owning entity.
+https://auth-p2.demo.inoerawan.id:8443 {
+    tls /tls/fullchain.pem /tls/privkey.pem
+    header Cache-Control no-store
+    header Referrer-Policy no-referrer
+    redir https://login-dompet-identitas.demo.inoerawan.id{uri} 308
+}
+
+# Legacy entry points preserve paths while sending visitors to the owning entity.
+https://issuer-p2.demo.inoerawan.id:8443 {
+    tls /tls/fullchain.pem /tls/privkey.pem
+    header Cache-Control no-store
+    header Referrer-Policy no-referrer
+    redir https://lsp-nusantara.demo.inoerawan.id{uri} 308
+}
+
+# Legacy entry points preserve paths while sending visitors to the owning entity.
+https://verifier-p2.demo.inoerawan.id:8443 {
+    tls /tls/fullchain.pem /tls/privkey.pem
+    header Cache-Control no-store
+    header Referrer-Policy no-referrer
+    redir https://karya-instalasi.demo.inoerawan.id{uri} 308
+}
+
+https://login-lsp-nusantara.demo.inoerawan.id:8443 {
+    tls /tls/fullchain.pem /tls/privkey.pem
+    header {
+        Cache-Control no-store
+        Referrer-Policy no-referrer
+        X-Content-Type-Options nosniff
+        -Server
+    }
+    @login {
+        method GET HEAD POST
+        path /realms/lsp-nusantara/.well-known/openid-configuration /realms/lsp-nusantara/protocol/openid-connect/auth /realms/lsp-nusantara/protocol/openid-connect/token /realms/lsp-nusantara/protocol/openid-connect/certs /realms/lsp-nusantara/protocol/openid-connect/revoke /realms/lsp-nusantara/login-actions/authenticate /realms/lsp-nusantara/login-actions/restart /realms/lsp-nusantara/login-actions/reset-credentials /realms/lsp-nusantara/login-actions/action-token /realms/lsp-nusantara/login-actions/required-action /realms/lsp-nusantara/login-actions/execute-actions /resources/*
+    }
+    handle @login {
+        reverse_proxy https://issuer-keycloak:8443 {
+            header_up Host login-lsp-nusantara.demo.inoerawan.id
+            transport http {
+                tls_server_name login-lsp-nusantara.demo.inoerawan.id
+            }
+        }
+    }
+    handle {
+        respond "Not found" 404
+    }
+}
+https://login-karya-instalasi.demo.inoerawan.id:8443 {
+    tls /tls/fullchain.pem /tls/privkey.pem
+    header {
+        Cache-Control no-store
+        Referrer-Policy no-referrer
+        X-Content-Type-Options nosniff
+        -Server
+    }
+    @login {
+        method GET HEAD POST
+        path /realms/karya-instalasi/.well-known/openid-configuration /realms/karya-instalasi/protocol/openid-connect/auth /realms/karya-instalasi/protocol/openid-connect/token /realms/karya-instalasi/protocol/openid-connect/certs /realms/karya-instalasi/protocol/openid-connect/revoke /realms/karya-instalasi/login-actions/authenticate /realms/karya-instalasi/login-actions/restart /realms/karya-instalasi/login-actions/reset-credentials /realms/karya-instalasi/login-actions/action-token /realms/karya-instalasi/login-actions/required-action /realms/karya-instalasi/login-actions/execute-actions /resources/*
+    }
+    handle @login {
+        reverse_proxy https://company-keycloak:8443 {
+            header_up Host login-karya-instalasi.demo.inoerawan.id
+            transport http {
+                tls_server_name login-karya-instalasi.demo.inoerawan.id
+            }
+        }
+    }
+    handle {
+        respond "Not found" 404
+    }
+}

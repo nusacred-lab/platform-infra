@@ -22,6 +22,9 @@ REDIRECT = "id.nusacred.wallet.debug:/oauth2redirect"
 
 class Browser:
     public_frontend = False
+    loopback_port = 18443
+    allowed_hosts = frozenset(("auth-p2.demo.inoerawan.id", "wallet-p2.demo.inoerawan.id",
+                              "issuer-p2.demo.inoerawan.id", "verifier-p2.demo.inoerawan.id"))
 
     def __init__(self):
         self.cookies = {}
@@ -29,12 +32,11 @@ class Browser:
 
     def request(self, url, method="GET", body=None, headers=None, form=False):
         uri = urlsplit(url)
-        assert uri.scheme == "https" and uri.netloc in (urlsplit(AUTH).netloc, urlsplit(WALLET).netloc,
-            "issuer-p2.demo.inoerawan.id", "verifier-p2.demo.inoerawan.id")
+        assert uri.scheme == "https" and uri.netloc in self.allowed_hosts
         conn = http.client.HTTPSConnection(uri.hostname, timeout=15)
         def connect():
             conn.sock = ssl.create_default_context().wrap_socket(
-                socket.create_connection(("127.0.0.1", 18443), timeout=15), server_hostname=uri.hostname)
+                socket.create_connection(("127.0.0.1", self.loopback_port), timeout=15), server_hostname=uri.hostname)
         if not self.public_frontend:
             conn.connect = connect
         outgoing = dict(headers or {})

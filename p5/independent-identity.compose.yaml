@@ -1,0 +1,160 @@
+# Additional identity runtimes for independently administered organizations.
+# Wallet identity, its database and its recovery coordinator remain unchanged.
+services:
+  issuer-postgres:
+    image: ${P2_POSTGRES_IMAGE:?Use the scanned PostgreSQL image}
+    environment:
+      POSTGRES_DB: issuer_identity
+      POSTGRES_USER: issuer_identity
+      POSTGRES_PASSWORD_FILE: /run/secrets/issuer-identity-db-password
+    secrets: [issuer-identity-db-password]
+    volumes: [issuer-identity-data:/var/lib/postgresql]
+    networks: [issuer-identity]
+    healthcheck:
+      test: [CMD-SHELL, "pg_isready -U issuer_identity -d issuer_identity"]
+      interval: 5s
+      timeout: 3s
+      retries: 30
+    mem_limit: 384m
+    cpus: 0.5
+    pids_limit: 128
+    security_opt: [no-new-privileges:true]
+    restart: "no"
+    logging:
+      driver: json-file
+      options: {max-size: 5m, max-file: "2"}
+  issuer-keycloak:
+    image: ${P5_STAFF_KEYCLOAK_IMAGE:?Use the scanned provider-free Keycloak image}
+    command: [start, --optimized, --import-realm]
+    environment:
+      KC_HOSTNAME: https://login-lsp-nusantara.demo.inoerawan.id
+      KC_HOSTNAME_STRICT: "true"
+      KC_HTTP_ENABLED: "false"
+      KC_HTTPS_CERTIFICATE_FILE: /tls/fullchain.pem
+      KC_HTTPS_CERTIFICATE_KEY_FILE: /tls/privkey.pem
+      KC_DB_URL: jdbc:postgresql://issuer-postgres:5432/issuer_identity
+      KC_DB_USERNAME: issuer_identity
+      KC_DB_PASSWORD: ${P5_ISSUER_DB_PASSWORD:?Prepare independent identity credentials}
+      KC_BOOTSTRAP_ADMIN_USERNAME: issuer-bootstrap
+      KC_BOOTSTRAP_ADMIN_PASSWORD: ${P5_ISSUER_BOOTSTRAP_PASSWORD:?Prepare independent admin credentials}
+      KC_HEALTH_ENABLED: "true"
+      KC_CACHE: local
+      JAVA_OPTS_KC_HEAP: -Xms128m -Xmx384m
+    depends_on:
+      issuer-postgres: {condition: service_healthy}
+    volumes:
+      - ${P2_RUNTIME:?}/tls:/tls:ro,z
+      - ${P5_IDENTITY_RUNTIME:?}/issuer-import:/opt/keycloak/data/import:ro,Z
+      - ../p5/themes/nusacred:/opt/keycloak/themes/nusacred:ro,Z
+      - ../p5/themes/lsp-nusantara:/opt/keycloak/themes/lsp-nusantara:ro,Z
+      - ../p5/themes/karya-instalasi:/opt/keycloak/themes/karya-instalasi:ro,Z
+    networks: [issuer-identity, issuer-auth-edge, staff-smtp]
+    tmpfs: ["/tmp:rw,noexec,nosuid,size=64m"]
+    cap_drop: [ALL]
+    security_opt: [no-new-privileges:true]
+    mem_limit: 768m
+    cpus: 1.0
+    pids_limit: 256
+    restart: "no"
+    logging:
+      driver: json-file
+      options: {max-size: 5m, max-file: "2"}
+  company-postgres:
+    image: ${P2_POSTGRES_IMAGE:?Use the scanned PostgreSQL image}
+    environment:
+      POSTGRES_DB: company_identity
+      POSTGRES_USER: company_identity
+      POSTGRES_PASSWORD_FILE: /run/secrets/company-identity-db-password
+    secrets: [company-identity-db-password]
+    volumes: [company-identity-data:/var/lib/postgresql]
+    networks: [company-identity]
+    healthcheck:
+      test: [CMD-SHELL, "pg_isready -U company_identity -d company_identity"]
+      interval: 5s
+      timeout: 3s
+      retries: 30
+    mem_limit: 384m
+    cpus: 0.5
+    pids_limit: 128
+    security_opt: [no-new-privileges:true]
+    restart: "no"
+    logging:
+      driver: json-file
+      options: {max-size: 5m, max-file: "2"}
+  company-keycloak:
+    image: ${P5_STAFF_KEYCLOAK_IMAGE:?Use the scanned provider-free Keycloak image}
+    command: [start, --optimized, --import-realm]
+    environment:
+      KC_HOSTNAME: https://login-karya-instalasi.demo.inoerawan.id
+      KC_HOSTNAME_STRICT: "true"
+      KC_HTTP_ENABLED: "false"
+      KC_HTTPS_CERTIFICATE_FILE: /tls/fullchain.pem
+      KC_HTTPS_CERTIFICATE_KEY_FILE: /tls/privkey.pem
+      KC_DB_URL: jdbc:postgresql://company-postgres:5432/company_identity
+      KC_DB_USERNAME: company_identity
+      KC_DB_PASSWORD: ${P5_COMPANY_DB_PASSWORD:?Prepare independent identity credentials}
+      KC_BOOTSTRAP_ADMIN_USERNAME: company-bootstrap
+      KC_BOOTSTRAP_ADMIN_PASSWORD: ${P5_COMPANY_BOOTSTRAP_PASSWORD:?Prepare independent admin credentials}
+      KC_HEALTH_ENABLED: "true"
+      KC_CACHE: local
+      JAVA_OPTS_KC_HEAP: -Xms128m -Xmx384m
+    depends_on:
+      company-postgres: {condition: service_healthy}
+    volumes:
+      - ${P2_RUNTIME:?}/tls:/tls:ro,z
+      - ${P5_IDENTITY_RUNTIME:?}/company-import:/opt/keycloak/data/import:ro,Z
+      - ../p5/themes/nusacred:/opt/keycloak/themes/nusacred:ro,Z
+      - ../p5/themes/lsp-nusantara:/opt/keycloak/themes/lsp-nusantara:ro,Z
+      - ../p5/themes/karya-instalasi:/opt/keycloak/themes/karya-instalasi:ro,Z
+    networks: [company-identity, company-auth-edge, staff-smtp]
+    tmpfs: ["/tmp:rw,noexec,nosuid,size=64m"]
+    cap_drop: [ALL]
+    security_opt: [no-new-privileges:true]
+    mem_limit: 768m
+    cpus: 1.0
+    pids_limit: 256
+    restart: "no"
+    logging:
+      driver: json-file
+      options: {max-size: 5m, max-file: "2"}
+  issuer-backend:
+    secrets: [issuer-client-secret]
+  company-backend:
+    secrets: [company-client-secret]
+  mail:
+    networks: [identity, staff-smtp]
+  access:
+    networks:
+      identity: {}
+      diagnostics: {}
+      application:
+        aliases: [login-dompet-identitas.demo.inoerawan.id, login-lsp-nusantara.demo.inoerawan.id, login-karya-instalasi.demo.inoerawan.id]
+      issuer-auth-edge: {}
+      company-auth-edge: {}
+  p2-ingress:
+    networks:
+      auth-edge: {}
+      application:
+        aliases: [lsp-nusantara.demo.inoerawan.id]
+      frontend: {}
+      issuer-auth-edge: {}
+      company-auth-edge: {}
+networks:
+  issuer-identity: {internal: true}
+  company-identity: {internal: true}
+  issuer-auth-edge: {internal: true}
+  company-auth-edge: {internal: true}
+  staff-smtp: {internal: true}
+volumes:
+  issuer-identity-data:
+  company-identity-data:
+secrets:
+  issuer-identity-db-password:
+    file: ${P5_IDENTITY_RUNTIME:?}/issuer-db-password
+  company-identity-db-password:
+    file: ${P5_IDENTITY_RUNTIME:?}/company-db-password
+
+  issuer-client-secret:
+    file: ${P5_IDENTITY_RUNTIME:?}/issuer-client-secret
+  company-client-secret:
+    file: ${P5_IDENTITY_RUNTIME:?}/company-client-secret
