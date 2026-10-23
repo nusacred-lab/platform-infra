@@ -1,0 +1,1138 @@
+{
+  "name": "${P6_PROJECT_NAME:-competency-proof-p6}",
+  "services": {
+    "postgres": {
+      "platform": "linux/amd64",
+      "restart": "unless-stopped",
+      "security_opt": [
+        "no-new-privileges:true"
+      ],
+      "pids_limit": 256,
+      "logging": {
+        "driver": "json-file",
+        "options": {
+          "max-size": "5m",
+          "max-file": "2"
+        }
+      },
+      "image": "${P6_POSTGRES_IMAGE:?Use the verified release manifest}",
+      "environment": {
+        "POSTGRES_DB": "wallet_identity",
+        "POSTGRES_USER": "wallet_identity",
+        "POSTGRES_PASSWORD_FILE": "/run/secrets/wallet-db-password"
+      },
+      "secrets": [
+        "wallet-db-password"
+      ],
+      "volumes": [
+        "wallet-identity-data:/var/lib/postgresql"
+      ],
+      "networks": [
+        "wallet-identity"
+      ],
+      "mem_limit": "384m",
+      "healthcheck": {
+        "test": [
+          "CMD-SHELL",
+          "pg_isready -U wallet_identity -d wallet_identity"
+        ],
+        "interval": "5s",
+        "timeout": "3s",
+        "retries": 40
+      }
+    },
+    "keycloak": {
+      "platform": "linux/amd64",
+      "restart": "unless-stopped",
+      "security_opt": [
+        "no-new-privileges:true"
+      ],
+      "pids_limit": 256,
+      "logging": {
+        "driver": "json-file",
+        "options": {
+          "max-size": "5m",
+          "max-file": "2"
+        }
+      },
+      "image": "${P6_KEYCLOAK_RECOVERY_IMAGE:?Use the verified release manifest}",
+      "command": [
+        "start",
+        "--optimized",
+        "--import-realm"
+      ],
+      "environment": {
+        "KC_HOSTNAME": "https://login-dompet-identitas.demo.inoerawan.id",
+        "KC_HOSTNAME_STRICT": "true",
+        "KC_HTTP_ENABLED": "false",
+        "KC_HTTPS_CERTIFICATE_FILE": "/tls/fullchain.pem",
+        "KC_HTTPS_CERTIFICATE_KEY_FILE": "/tls/privkey.pem",
+        "KC_DB_URL": "jdbc:postgresql://postgres:5432/wallet_identity",
+        "KC_DB_USERNAME": "wallet_identity",
+        "KC_DB_PASSWORD": "${P6_WALLET_DB_PASSWORD:?Prepare secrets}",
+        "KC_BOOTSTRAP_ADMIN_USERNAME": "wallet-bootstrap",
+        "KC_BOOTSTRAP_ADMIN_PASSWORD": "${P6_WALLET_BOOTSTRAP_PASSWORD:?Prepare secrets}",
+        "KC_HEALTH_ENABLED": "true",
+        "KC_CACHE": "local",
+        "JAVA_OPTS_KC_HEAP": "-Xms128m -Xmx384m",
+        "RECOVERY_COORDINATOR_ORIGIN": "http://custodian:8080",
+        "RECOVERY_ISSUER": "https://login-dompet-identitas.demo.inoerawan.id/realms/competency-proof-p2",
+        "RECOVERY_SECRET_FILE": "/run/secrets/recovery-service-secret"
+      },
+      "depends_on": {
+        "postgres": {
+          "condition": "service_healthy"
+        }
+      },
+      "volumes": [
+        {
+          "type": "bind",
+          "source": "${P6_RUNTIME:?Prepare private runtime}/tls",
+          "target": "/tls",
+          "read_only": true,
+          "bind": {
+            "create_host_path": false,
+            "selinux": "z"
+          }
+        },
+        {
+          "type": "bind",
+          "source": "${P6_RUNTIME:?Prepare private runtime}/wallet-import",
+          "target": "/opt/keycloak/data/import",
+          "read_only": true,
+          "bind": {
+            "create_host_path": false,
+            "selinux": "z"
+          }
+        },
+        {
+          "type": "bind",
+          "source": "${P6_RUNTIME:?Prepare private runtime}/themes",
+          "target": "/opt/keycloak/themes",
+          "read_only": true,
+          "bind": {
+            "create_host_path": false,
+            "selinux": "z"
+          }
+        }
+      ],
+      "networks": [
+        "wallet-identity",
+        "staff-smtp",
+        "recovery"
+      ],
+      "secrets": [
+        "recovery-service-secret"
+      ],
+      "tmpfs": [
+        "/tmp:rw,noexec,nosuid,size=64m"
+      ],
+      "cap_drop": [
+        "ALL"
+      ],
+      "mem_limit": "768m"
+    },
+    "custodian": {
+      "platform": "linux/amd64",
+      "restart": "unless-stopped",
+      "security_opt": [
+        "no-new-privileges:true"
+      ],
+      "pids_limit": 256,
+      "logging": {
+        "driver": "json-file",
+        "options": {
+          "max-size": "5m",
+          "max-file": "2"
+        }
+      },
+      "image": "${P6_CUSTODIAN_IMAGE:?Use the verified release manifest}",
+      "environment": {
+        "JAVA_TOOL_OPTIONS": "-Xms32m -Xmx192m -XX:ActiveProcessorCount=2 -Djavax.net.ssl.trustStore=/tls/truststore.p12 -Djavax.net.ssl.trustStorePassword=changeit",
+        "OIDC_ISSUER": "https://login-dompet-identitas.demo.inoerawan.id/realms/competency-proof-p2",
+        "OIDC_BACKCHANNEL_ORIGIN": "https://login-dompet-identitas.demo.inoerawan.id:8443",
+        "OIDC_PORTAL_ORIGIN": "https://dompet-identitas.demo.inoerawan.id",
+        "OIDC_CLIENT_ID": "custodian-bff-p2",
+        "OIDC_CLIENT_SECRET_FILE": "/run/secrets/wallet-client-secret",
+        "WALLET_PUBLIC_ORIGIN": "https://dompet-identitas.demo.inoerawan.id",
+        "OFFER_REFERENCE_KEY_FILE": "/run/secrets/offer-reference-key",
+        "ACCESS_REGISTRY_PATH": "/data/access.db",
+        "WALLET_ORIGIN": "http://wallet:7006",
+        "RECOVERY_SECRET_FILE": "/run/secrets/recovery-service-secret"
+      },
+      "secrets": [
+        "wallet-client-secret",
+        "offer-reference-key",
+        "recovery-service-secret"
+      ],
+      "volumes": [
+        {
+          "type": "bind",
+          "source": "${P6_RUNTIME:?Prepare private runtime}/tls",
+          "target": "/tls",
+          "read_only": true,
+          "bind": {
+            "create_host_path": false,
+            "selinux": "z"
+          }
+        },
+        "wallet-application-data:/data"
+      ],
+      "networks": [
+        "application",
+        "protocol",
+        "wallet-backend",
+        "recovery"
+      ],
+      "read_only": true,
+      "tmpfs": [
+        "/tmp:rw,noexec,nosuid,size=32m"
+      ],
+      "cap_drop": [
+        "ALL"
+      ],
+      "mem_limit": "384m",
+      "depends_on": {
+        "private-access": {
+          "condition": "service_started"
+        },
+        "init-storage": {
+          "condition": "service_completed_successfully"
+        }
+      }
+    },
+    "issuer-postgres": {
+      "platform": "linux/amd64",
+      "restart": "unless-stopped",
+      "security_opt": [
+        "no-new-privileges:true"
+      ],
+      "pids_limit": 256,
+      "logging": {
+        "driver": "json-file",
+        "options": {
+          "max-size": "5m",
+          "max-file": "2"
+        }
+      },
+      "image": "${P6_POSTGRES_IMAGE:?Use the verified release manifest}",
+      "environment": {
+        "POSTGRES_DB": "issuer_identity",
+        "POSTGRES_USER": "issuer_identity",
+        "POSTGRES_PASSWORD_FILE": "/run/secrets/issuer-db-password"
+      },
+      "secrets": [
+        "issuer-db-password"
+      ],
+      "volumes": [
+        "issuer-identity-data:/var/lib/postgresql"
+      ],
+      "networks": [
+        "issuer-identity"
+      ],
+      "mem_limit": "384m",
+      "healthcheck": {
+        "test": [
+          "CMD-SHELL",
+          "pg_isready -U issuer_identity -d issuer_identity"
+        ],
+        "interval": "5s",
+        "timeout": "3s",
+        "retries": 40
+      }
+    },
+    "issuer-keycloak": {
+      "platform": "linux/amd64",
+      "restart": "unless-stopped",
+      "security_opt": [
+        "no-new-privileges:true"
+      ],
+      "pids_limit": 256,
+      "logging": {
+        "driver": "json-file",
+        "options": {
+          "max-size": "5m",
+          "max-file": "2"
+        }
+      },
+      "image": "${P6_KEYCLOAK_STAFF_IMAGE:?Use the verified release manifest}",
+      "command": [
+        "start",
+        "--optimized",
+        "--import-realm"
+      ],
+      "environment": {
+        "KC_HOSTNAME": "https://login-lsp-nusantara.demo.inoerawan.id",
+        "KC_HOSTNAME_STRICT": "true",
+        "KC_HTTP_ENABLED": "false",
+        "KC_HTTPS_CERTIFICATE_FILE": "/tls/fullchain.pem",
+        "KC_HTTPS_CERTIFICATE_KEY_FILE": "/tls/privkey.pem",
+        "KC_DB_URL": "jdbc:postgresql://issuer-postgres:5432/issuer_identity",
+        "KC_DB_USERNAME": "issuer_identity",
+        "KC_DB_PASSWORD": "${P6_ISSUER_DB_PASSWORD:?Prepare secrets}",
+        "KC_BOOTSTRAP_ADMIN_USERNAME": "issuer-bootstrap",
+        "KC_BOOTSTRAP_ADMIN_PASSWORD": "${P6_ISSUER_BOOTSTRAP_PASSWORD:?Prepare secrets}",
+        "KC_HEALTH_ENABLED": "true",
+        "KC_CACHE": "local",
+        "JAVA_OPTS_KC_HEAP": "-Xms128m -Xmx384m"
+      },
+      "depends_on": {
+        "issuer-postgres": {
+          "condition": "service_healthy"
+        }
+      },
+      "volumes": [
+        {
+          "type": "bind",
+          "source": "${P6_RUNTIME:?Prepare private runtime}/tls",
+          "target": "/tls",
+          "read_only": true,
+          "bind": {
+            "create_host_path": false,
+            "selinux": "z"
+          }
+        },
+        {
+          "type": "bind",
+          "source": "${P6_RUNTIME:?Prepare private runtime}/issuer-import",
+          "target": "/opt/keycloak/data/import",
+          "read_only": true,
+          "bind": {
+            "create_host_path": false,
+            "selinux": "z"
+          }
+        },
+        {
+          "type": "bind",
+          "source": "${P6_RUNTIME:?Prepare private runtime}/themes",
+          "target": "/opt/keycloak/themes",
+          "read_only": true,
+          "bind": {
+            "create_host_path": false,
+            "selinux": "z"
+          }
+        }
+      ],
+      "networks": [
+        "issuer-identity",
+        "staff-smtp"
+      ],
+      "secrets": [],
+      "tmpfs": [
+        "/tmp:rw,noexec,nosuid,size=64m"
+      ],
+      "cap_drop": [
+        "ALL"
+      ],
+      "mem_limit": "768m"
+    },
+    "issuer-backend": {
+      "platform": "linux/amd64",
+      "restart": "unless-stopped",
+      "security_opt": [
+        "no-new-privileges:true"
+      ],
+      "pids_limit": 256,
+      "logging": {
+        "driver": "json-file",
+        "options": {
+          "max-size": "5m",
+          "max-file": "2"
+        }
+      },
+      "image": "${P6_ISSUER_IMAGE:?Use the verified release manifest}",
+      "environment": {
+        "JAVA_TOOL_OPTIONS": "-Xms32m -Xmx192m -XX:ActiveProcessorCount=2 -Djavax.net.ssl.trustStore=/tls/truststore.p12 -Djavax.net.ssl.trustStorePassword=changeit",
+        "OIDC_ISSUER": "https://login-lsp-nusantara.demo.inoerawan.id/realms/lsp-nusantara",
+        "OIDC_BACKCHANNEL_ORIGIN": "https://login-lsp-nusantara.demo.inoerawan.id:8443",
+        "OIDC_PORTAL_ORIGIN": "https://lsp-nusantara.demo.inoerawan.id",
+        "OIDC_CLIENT_ID": "issuer-bff-p2",
+        "OIDC_CLIENT_SECRET_FILE": "/run/secrets/issuer-client-secret",
+        "WALLET_PUBLIC_ORIGIN": "https://dompet-identitas.demo.inoerawan.id",
+        "OFFER_REFERENCE_KEY_FILE": "/run/secrets/offer-reference-key",
+        "APPLICATION_DB_PATH": "/data/issuer.sqlite",
+        "OIDC_ORGANIZATION_ASSIGNMENTS_FILE": "/run/secrets/issuer-organizations",
+        "ISSUER_PUBLIC_IDENTITY_FILE": "/run/issuer/public-issuer.json"
+      },
+      "secrets": [
+        "issuer-client-secret",
+        "offer-reference-key",
+        "issuer-organizations"
+      ],
+      "volumes": [
+        {
+          "type": "bind",
+          "source": "${P6_RUNTIME:?Prepare private runtime}/tls",
+          "target": "/tls",
+          "read_only": true,
+          "bind": {
+            "create_host_path": false,
+            "selinux": "z"
+          }
+        },
+        "issuer-application-data:/data",
+        {
+          "type": "bind",
+          "source": "${P6_RUNTIME:?Prepare private runtime}/public-issuer.json",
+          "target": "/run/issuer/public-issuer.json",
+          "read_only": true,
+          "bind": {
+            "create_host_path": false,
+            "selinux": "z"
+          }
+        }
+      ],
+      "networks": [
+        "application",
+        "protocol"
+      ],
+      "read_only": true,
+      "tmpfs": [
+        "/tmp:rw,noexec,nosuid,size=32m"
+      ],
+      "cap_drop": [
+        "ALL"
+      ],
+      "mem_limit": "384m",
+      "depends_on": {
+        "private-access": {
+          "condition": "service_started"
+        },
+        "init-storage": {
+          "condition": "service_completed_successfully"
+        }
+      }
+    },
+    "company-postgres": {
+      "platform": "linux/amd64",
+      "restart": "unless-stopped",
+      "security_opt": [
+        "no-new-privileges:true"
+      ],
+      "pids_limit": 256,
+      "logging": {
+        "driver": "json-file",
+        "options": {
+          "max-size": "5m",
+          "max-file": "2"
+        }
+      },
+      "image": "${P6_POSTGRES_IMAGE:?Use the verified release manifest}",
+      "environment": {
+        "POSTGRES_DB": "company_identity",
+        "POSTGRES_USER": "company_identity",
+        "POSTGRES_PASSWORD_FILE": "/run/secrets/company-db-password"
+      },
+      "secrets": [
+        "company-db-password"
+      ],
+      "volumes": [
+        "company-identity-data:/var/lib/postgresql"
+      ],
+      "networks": [
+        "company-identity"
+      ],
+      "mem_limit": "384m",
+      "healthcheck": {
+        "test": [
+          "CMD-SHELL",
+          "pg_isready -U company_identity -d company_identity"
+        ],
+        "interval": "5s",
+        "timeout": "3s",
+        "retries": 40
+      }
+    },
+    "company-keycloak": {
+      "platform": "linux/amd64",
+      "restart": "unless-stopped",
+      "security_opt": [
+        "no-new-privileges:true"
+      ],
+      "pids_limit": 256,
+      "logging": {
+        "driver": "json-file",
+        "options": {
+          "max-size": "5m",
+          "max-file": "2"
+        }
+      },
+      "image": "${P6_KEYCLOAK_STAFF_IMAGE:?Use the verified release manifest}",
+      "command": [
+        "start",
+        "--optimized",
+        "--import-realm"
+      ],
+      "environment": {
+        "KC_HOSTNAME": "https://login-karya-instalasi.demo.inoerawan.id",
+        "KC_HOSTNAME_STRICT": "true",
+        "KC_HTTP_ENABLED": "false",
+        "KC_HTTPS_CERTIFICATE_FILE": "/tls/fullchain.pem",
+        "KC_HTTPS_CERTIFICATE_KEY_FILE": "/tls/privkey.pem",
+        "KC_DB_URL": "jdbc:postgresql://company-postgres:5432/company_identity",
+        "KC_DB_USERNAME": "company_identity",
+        "KC_DB_PASSWORD": "${P6_COMPANY_DB_PASSWORD:?Prepare secrets}",
+        "KC_BOOTSTRAP_ADMIN_USERNAME": "company-bootstrap",
+        "KC_BOOTSTRAP_ADMIN_PASSWORD": "${P6_COMPANY_BOOTSTRAP_PASSWORD:?Prepare secrets}",
+        "KC_HEALTH_ENABLED": "true",
+        "KC_CACHE": "local",
+        "JAVA_OPTS_KC_HEAP": "-Xms128m -Xmx384m"
+      },
+      "depends_on": {
+        "company-postgres": {
+          "condition": "service_healthy"
+        }
+      },
+      "volumes": [
+        {
+          "type": "bind",
+          "source": "${P6_RUNTIME:?Prepare private runtime}/tls",
+          "target": "/tls",
+          "read_only": true,
+          "bind": {
+            "create_host_path": false,
+            "selinux": "z"
+          }
+        },
+        {
+          "type": "bind",
+          "source": "${P6_RUNTIME:?Prepare private runtime}/company-import",
+          "target": "/opt/keycloak/data/import",
+          "read_only": true,
+          "bind": {
+            "create_host_path": false,
+            "selinux": "z"
+          }
+        },
+        {
+          "type": "bind",
+          "source": "${P6_RUNTIME:?Prepare private runtime}/themes",
+          "target": "/opt/keycloak/themes",
+          "read_only": true,
+          "bind": {
+            "create_host_path": false,
+            "selinux": "z"
+          }
+        }
+      ],
+      "networks": [
+        "company-identity",
+        "staff-smtp"
+      ],
+      "secrets": [],
+      "tmpfs": [
+        "/tmp:rw,noexec,nosuid,size=64m"
+      ],
+      "cap_drop": [
+        "ALL"
+      ],
+      "mem_limit": "768m"
+    },
+    "company-backend": {
+      "platform": "linux/amd64",
+      "restart": "unless-stopped",
+      "security_opt": [
+        "no-new-privileges:true"
+      ],
+      "pids_limit": 256,
+      "logging": {
+        "driver": "json-file",
+        "options": {
+          "max-size": "5m",
+          "max-file": "2"
+        }
+      },
+      "image": "${P6_COMPANY_IMAGE:?Use the verified release manifest}",
+      "environment": {
+        "JAVA_TOOL_OPTIONS": "-Xms32m -Xmx192m -XX:ActiveProcessorCount=2 -Djavax.net.ssl.trustStore=/tls/truststore.p12 -Djavax.net.ssl.trustStorePassword=changeit",
+        "OIDC_ISSUER": "https://login-karya-instalasi.demo.inoerawan.id/realms/karya-instalasi",
+        "OIDC_BACKCHANNEL_ORIGIN": "https://login-karya-instalasi.demo.inoerawan.id:8443",
+        "OIDC_PORTAL_ORIGIN": "https://karya-instalasi.demo.inoerawan.id",
+        "OIDC_CLIENT_ID": "company-bff-p2",
+        "OIDC_CLIENT_SECRET_FILE": "/run/secrets/company-client-secret",
+        "WALLET_PUBLIC_ORIGIN": "https://dompet-identitas.demo.inoerawan.id",
+        "OFFER_REFERENCE_KEY_FILE": "/run/secrets/offer-reference-key",
+        "APPLICATION_DB_PATH": "/data/company.sqlite",
+        "OIDC_ORGANIZATION_ASSIGNMENTS_FILE": "/run/secrets/company-organizations",
+        "ISSUER_PROFILE_BACKCHANNEL_ORIGIN": "https://lsp-nusantara.demo.inoerawan.id:8443"
+      },
+      "secrets": [
+        "company-client-secret",
+        "offer-reference-key",
+        "company-organizations"
+      ],
+      "volumes": [
+        {
+          "type": "bind",
+          "source": "${P6_RUNTIME:?Prepare private runtime}/tls",
+          "target": "/tls",
+          "read_only": true,
+          "bind": {
+            "create_host_path": false,
+            "selinux": "z"
+          }
+        },
+        "company-application-data:/data"
+      ],
+      "networks": [
+        "application",
+        "protocol"
+      ],
+      "read_only": true,
+      "tmpfs": [
+        "/tmp:rw,noexec,nosuid,size=32m"
+      ],
+      "cap_drop": [
+        "ALL"
+      ],
+      "mem_limit": "384m",
+      "depends_on": {
+        "private-access": {
+          "condition": "service_started"
+        },
+        "init-storage": {
+          "condition": "service_completed_successfully"
+        }
+      }
+    },
+    "mail": {
+      "platform": "linux/amd64",
+      "restart": "unless-stopped",
+      "security_opt": [
+        "no-new-privileges:true"
+      ],
+      "pids_limit": 256,
+      "logging": {
+        "driver": "json-file",
+        "options": {
+          "max-size": "5m",
+          "max-file": "2"
+        }
+      },
+      "image": "${P6_MAIL_IMAGE:?Use the verified release manifest}",
+      "environment": {
+        "MP_DATABASE": "/data/mailpit.db",
+        "MP_MAX_MESSAGES": "100",
+        "MP_DISABLE_VERSION_CHECK": "true",
+        "MP_SMTP_ALLOWED_RECIPIENTS": "@example\\.test$$"
+      },
+      "volumes": [
+        "mail-data:/data"
+      ],
+      "networks": [
+        "staff-smtp"
+      ],
+      "read_only": true,
+      "tmpfs": [
+        "/tmp:rw,noexec,nosuid,size=16m"
+      ],
+      "cap_drop": [
+        "ALL"
+      ],
+      "mem_limit": "128m"
+    },
+    "issuer": {
+      "platform": "linux/amd64",
+      "restart": "unless-stopped",
+      "security_opt": [
+        "no-new-privileges:true"
+      ],
+      "pids_limit": 256,
+      "logging": {
+        "driver": "json-file",
+        "options": {
+          "max-size": "5m",
+          "max-file": "2"
+        }
+      },
+      "image": "${P6_WALT_ISSUER_IMAGE:?Use the verified release manifest}",
+      "environment": {
+        "JAVA_TOOL_OPTIONS": "-Xms64m -Xmx768m -XX:ActiveProcessorCount=2"
+      },
+      "volumes": [
+        {
+          "type": "bind",
+          "source": "${P6_RUNTIME:?Prepare private runtime}/walt/issuer",
+          "target": "/waltid-issuer-api2/config",
+          "read_only": true,
+          "bind": {
+            "create_host_path": false,
+            "selinux": "z"
+          }
+        }
+      ],
+      "networks": [
+        "protocol"
+      ],
+      "read_only": true,
+      "tmpfs": [
+        "/tmp:rw,noexec,nosuid,nodev,size=256m"
+      ],
+      "cap_drop": [
+        "ALL"
+      ],
+      "mem_limit": "2g",
+      "depends_on": {
+        "init-storage": {
+          "condition": "service_completed_successfully"
+        }
+      },
+      "user": "10001:10001"
+    },
+    "wallet": {
+      "platform": "linux/amd64",
+      "restart": "unless-stopped",
+      "security_opt": [
+        "no-new-privileges:true"
+      ],
+      "pids_limit": 256,
+      "logging": {
+        "driver": "json-file",
+        "options": {
+          "max-size": "5m",
+          "max-file": "2"
+        }
+      },
+      "image": "${P6_WALT_WALLET_IMAGE:?Use the verified release manifest}",
+      "environment": {
+        "JAVA_TOOL_OPTIONS": "-Xms64m -Xmx768m -XX:ActiveProcessorCount=2"
+      },
+      "volumes": [
+        {
+          "type": "bind",
+          "source": "${P6_RUNTIME:?Prepare private runtime}/walt/wallet",
+          "target": "/waltid-wallet-api2/config",
+          "read_only": true,
+          "bind": {
+            "create_host_path": false,
+            "selinux": "z"
+          }
+        },
+        "protocol-wallet-data:/data"
+      ],
+      "networks": [
+        "protocol",
+        "wallet-backend"
+      ],
+      "read_only": true,
+      "tmpfs": [
+        "/tmp:rw,exec,nosuid,nodev,size=256m"
+      ],
+      "cap_drop": [
+        "ALL"
+      ],
+      "mem_limit": "2g",
+      "depends_on": {
+        "init-storage": {
+          "condition": "service_completed_successfully"
+        }
+      },
+      "user": "10001:10001"
+    },
+    "verifier": {
+      "platform": "linux/amd64",
+      "restart": "unless-stopped",
+      "security_opt": [
+        "no-new-privileges:true"
+      ],
+      "pids_limit": 256,
+      "logging": {
+        "driver": "json-file",
+        "options": {
+          "max-size": "5m",
+          "max-file": "2"
+        }
+      },
+      "image": "${P6_WALT_VERIFIER_IMAGE:?Use the verified release manifest}",
+      "environment": {
+        "JAVA_TOOL_OPTIONS": "-Xms64m -Xmx768m -XX:ActiveProcessorCount=2"
+      },
+      "volumes": [
+        {
+          "type": "bind",
+          "source": "${P6_RUNTIME:?Prepare private runtime}/walt/verifier",
+          "target": "/waltid-verifier-api2/config",
+          "read_only": true,
+          "bind": {
+            "create_host_path": false,
+            "selinux": "z"
+          }
+        }
+      ],
+      "networks": [
+        "protocol"
+      ],
+      "read_only": true,
+      "tmpfs": [
+        "/tmp:rw,noexec,nosuid,nodev,size=256m"
+      ],
+      "cap_drop": [
+        "ALL"
+      ],
+      "mem_limit": "2g",
+      "depends_on": {
+        "init-storage": {
+          "condition": "service_completed_successfully"
+        }
+      },
+      "user": "10001:10001"
+    },
+    "init-storage": {
+      "platform": "linux/amd64",
+      "restart": "no",
+      "security_opt": [
+        "no-new-privileges:true"
+      ],
+      "pids_limit": 256,
+      "logging": {
+        "driver": "json-file",
+        "options": {
+          "max-size": "5m",
+          "max-file": "2"
+        }
+      },
+      "image": "${P6_KEYCLOAK_STAFF_IMAGE:?Use the verified release manifest}",
+      "user": "0:0",
+      "entrypoint": [
+        "/bin/bash",
+        "-ec"
+      ],
+      "command": [
+        "chown 10001:10001 /wallet /issuer /custodian /company"
+      ],
+      "volumes": [
+        "protocol-wallet-data:/wallet",
+        "issuer-application-data:/issuer",
+        "wallet-application-data:/custodian",
+        "company-application-data:/company"
+      ],
+      "networks": [
+        "storage-init"
+      ],
+      "read_only": true,
+      "cap_drop": [
+        "ALL"
+      ],
+      "cap_add": [
+        "CHOWN"
+      ],
+      "mem_limit": "64m"
+    },
+    "edge": {
+      "platform": "linux/amd64",
+      "restart": "unless-stopped",
+      "security_opt": [
+        "no-new-privileges:true"
+      ],
+      "pids_limit": 256,
+      "logging": {
+        "driver": "json-file",
+        "options": {
+          "max-size": "5m",
+          "max-file": "2"
+        }
+      },
+      "image": "${P6_EDGE_IMAGE:?Use the verified release manifest}",
+      "command": [
+        "/usr/bin/caddy",
+        "run",
+        "--config",
+        "/etc/caddy/Caddyfile",
+        "--adapter",
+        "caddyfile"
+      ],
+      "volumes": [
+        {
+          "type": "bind",
+          "source": "${P6_RUNTIME:?Prepare private runtime}/ingress.caddy",
+          "target": "/etc/caddy/Caddyfile",
+          "read_only": true,
+          "bind": {
+            "create_host_path": false,
+            "selinux": "z"
+          }
+        },
+        {
+          "type": "bind",
+          "source": "${P6_RUNTIME:?Prepare private runtime}/tls",
+          "target": "/tls",
+          "read_only": true,
+          "bind": {
+            "create_host_path": false,
+            "selinux": "z"
+          }
+        },
+        {
+          "type": "bind",
+          "source": "${P6_RUNTIME:?Prepare private runtime}/assetlinks",
+          "target": "/app-links",
+          "read_only": true,
+          "bind": {
+            "create_host_path": false,
+            "selinux": "z"
+          }
+        }
+      ],
+      "environment": {
+        "XDG_CONFIG_HOME": "/tmp/config",
+        "XDG_DATA_HOME": "/tmp/data"
+      },
+      "read_only": true,
+      "tmpfs": [
+        "/tmp:rw,noexec,nosuid,size=32m"
+      ],
+      "cap_drop": [
+        "ALL"
+      ],
+      "mem_limit": "128m",
+      "entrypoint": [],
+      "ports": [
+        "127.0.0.1:${P6_HTTPS_PORT:-28443}:8443"
+      ],
+      "networks": {
+        "application": {
+          "aliases": [
+            "lsp-nusantara.demo.inoerawan.id"
+          ]
+        },
+        "wallet-identity": {},
+        "issuer-identity": {},
+        "company-identity": {},
+        "diagnostics": {}
+      }
+    },
+    "private-access": {
+      "platform": "linux/amd64",
+      "restart": "unless-stopped",
+      "security_opt": [
+        "no-new-privileges:true"
+      ],
+      "pids_limit": 256,
+      "logging": {
+        "driver": "json-file",
+        "options": {
+          "max-size": "5m",
+          "max-file": "2"
+        }
+      },
+      "image": "${P6_EDGE_IMAGE:?Use the verified release manifest}",
+      "command": [
+        "/usr/bin/caddy",
+        "run",
+        "--config",
+        "/etc/caddy/Caddyfile",
+        "--adapter",
+        "caddyfile"
+      ],
+      "volumes": [
+        {
+          "type": "bind",
+          "source": "${P6_RUNTIME:?Prepare private runtime}/private.caddy",
+          "target": "/etc/caddy/Caddyfile",
+          "read_only": true,
+          "bind": {
+            "create_host_path": false,
+            "selinux": "z"
+          }
+        },
+        {
+          "type": "bind",
+          "source": "${P6_RUNTIME:?Prepare private runtime}/tls",
+          "target": "/tls",
+          "read_only": true,
+          "bind": {
+            "create_host_path": false,
+            "selinux": "z"
+          }
+        },
+        {
+          "type": "bind",
+          "source": "${P6_RUNTIME:?Prepare private runtime}/assetlinks",
+          "target": "/app-links",
+          "read_only": true,
+          "bind": {
+            "create_host_path": false,
+            "selinux": "z"
+          }
+        }
+      ],
+      "environment": {
+        "XDG_CONFIG_HOME": "/tmp/config",
+        "XDG_DATA_HOME": "/tmp/data"
+      },
+      "read_only": true,
+      "tmpfs": [
+        "/tmp:rw,noexec,nosuid,size=32m"
+      ],
+      "cap_drop": [
+        "ALL"
+      ],
+      "mem_limit": "128m",
+      "entrypoint": [],
+      "ports": [
+        "127.0.0.1:${P6_ADMIN_PORT:-28444}:8443",
+        "127.0.0.1:${P6_MAIL_PORT:-28025}:8025"
+      ],
+      "networks": {
+        "application": {
+          "aliases": [
+            "login-dompet-identitas.demo.inoerawan.id",
+            "login-lsp-nusantara.demo.inoerawan.id",
+            "login-karya-instalasi.demo.inoerawan.id"
+          ]
+        },
+        "wallet-identity": {},
+        "issuer-identity": {},
+        "company-identity": {},
+        "staff-smtp": {},
+        "diagnostics": {}
+      },
+      "depends_on": {
+        "keycloak": {
+          "condition": "service_started"
+        },
+        "issuer-keycloak": {
+          "condition": "service_started"
+        },
+        "company-keycloak": {
+          "condition": "service_started"
+        }
+      }
+    },
+    "protocol-access": {
+      "platform": "linux/amd64",
+      "restart": "unless-stopped",
+      "security_opt": [
+        "no-new-privileges:true"
+      ],
+      "pids_limit": 256,
+      "logging": {
+        "driver": "json-file",
+        "options": {
+          "max-size": "5m",
+          "max-file": "2"
+        }
+      },
+      "image": "${P6_EDGE_IMAGE:?Use the verified release manifest}",
+      "profiles": [
+        "acceptance"
+      ],
+      "command": [
+        "/usr/bin/caddy",
+        "run",
+        "--config",
+        "/etc/caddy/Caddyfile",
+        "--adapter",
+        "caddyfile"
+      ],
+      "entrypoint": [],
+      "volumes": [
+        {
+          "type": "bind",
+          "source": "${P6_RUNTIME:?Prepare private runtime}/protocol.caddy",
+          "target": "/etc/caddy/Caddyfile",
+          "read_only": true,
+          "bind": {
+            "create_host_path": false,
+            "selinux": "z"
+          }
+        }
+      ],
+      "ports": [
+        "127.0.0.1:37005:7005",
+        "127.0.0.1:37006:7006",
+        "127.0.0.1:37004:7004"
+      ],
+      "networks": [
+        "diagnostics",
+        "protocol"
+      ],
+      "read_only": true,
+      "tmpfs": [
+        "/tmp:rw,noexec,nosuid,size=16m"
+      ],
+      "cap_drop": [
+        "ALL"
+      ],
+      "mem_limit": "64m",
+      "environment": {
+        "XDG_CONFIG_HOME": "/tmp/config",
+        "XDG_DATA_HOME": "/tmp/data"
+      }
+    }
+  },
+  "networks": {
+    "application": {
+      "internal": true
+    },
+    "protocol": {
+      "internal": true
+    },
+    "wallet-backend": {
+      "internal": true
+    },
+    "recovery": {
+      "internal": true
+    },
+    "staff-smtp": {
+      "internal": true
+    },
+    "wallet-identity": {
+      "internal": true
+    },
+    "issuer-identity": {
+      "internal": true
+    },
+    "company-identity": {
+      "internal": true
+    },
+    "diagnostics": {
+      "internal": false
+    },
+    "storage-init": {
+      "internal": true
+    }
+  },
+  "volumes": {
+    "protocol-wallet-data": {},
+    "mail-data": {},
+    "wallet-identity-data": {},
+    "wallet-application-data": {},
+    "issuer-identity-data": {},
+    "issuer-application-data": {},
+    "company-identity-data": {},
+    "company-application-data": {}
+  },
+  "secrets": {
+    "offer-reference-key": {
+      "file": "${P6_RUNTIME:?}/offer-reference-key"
+    },
+    "recovery-service-secret": {
+      "file": "${P6_RUNTIME:?}/recovery-service-secret"
+    },
+    "wallet-db-password": {
+      "file": "${P6_RUNTIME:?}/wallet-db-password"
+    },
+    "wallet-client-secret": {
+      "file": "${P6_RUNTIME:?}/wallet-client-secret"
+    },
+    "issuer-db-password": {
+      "file": "${P6_RUNTIME:?}/issuer-db-password"
+    },
+    "issuer-client-secret": {
+      "file": "${P6_RUNTIME:?}/issuer-client-secret"
+    },
+    "company-db-password": {
+      "file": "${P6_RUNTIME:?}/company-db-password"
+    },
+    "company-client-secret": {
+      "file": "${P6_RUNTIME:?}/company-client-secret"
+    },
+    "issuer-organizations": {
+      "file": "${P6_RUNTIME:?}/issuer-organizations"
+    },
+    "company-organizations": {
+      "file": "${P6_RUNTIME:?}/company-organizations"
+    }
+  }
+}

@@ -17,3 +17,8 @@ secrets/
 *.jks
 *.keystore
 __pycache__/
+out/
+published/
+distribution/
+source-application/
+source-fork/
