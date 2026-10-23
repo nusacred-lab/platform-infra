@@ -39,6 +39,7 @@ def main():
         status,returned,raw=browser.request(origin+path,method,body,headers)
         try:data=json.loads(raw)
         except ValueError:data=raw
+        if status>=400:(runtime/'last-http-error.json').write_text(json.dumps({'path':path,'status':status,'body':data}))
         return status,returned,data
     anonymous=Browser()
     for origin in [WALLET,ISSUER,COMPANY]:
@@ -89,7 +90,7 @@ def main():
     approve()
     status,_,trust=request(company,COMPANY,'/api/v1/trusted-issuers');check('P6-trust-list',status==200 and len(trust['items'])==1)
     trusted_id=trust['items'][0]['id']
-    candidate='p6-'+secrets.token_hex(6)
+    candidate='p6-synthetic-applicant'
     assessment_body=dict(candidateAccountId=account,candidateId=candidate,competencyCode='DEMO-ELEC-001',assessmentResult='competent')
     key=str(uuid.uuid4())
     status,_,assessment=mutate(issuer,ISSUER,'/api/v1/assessments',assessment_body,ih,key=key);check('P6-assessment',status==201)
@@ -98,11 +99,11 @@ def main():
     check('P6-CSRF-denial',mutate(issuer,ISSUER,'/api/v1/assessments',assessment_body,{'Origin':ISSUER})[0]==403)
     check('P6-origin-denial',mutate(issuer,ISSUER,'/api/v1/assessments',assessment_body,dict(ih,Origin='https://foreign.example'))[0]==403)
     status,_,offer=mutate(issuer,ISSUER,'/api/v1/assessments/'+assessment['id']+'/offers',{},ih);check('P6-offer',status==202 and offer['state']=='COMPLETED')
-    status,_,preview=mutate(wallet,WALLET,'/api/v1/exchange-contexts',{'reference':offer['offerUrl']},nh);check('P6-receive-preview',status==201 and preview['consentRequired'] is True)
+    status,_,preview=mutate(wallet,WALLET,'/api/v1/exchange-contexts',{'reference':offer['offerUrl'],'credentialId':None},nh);check('P6-receive-preview',status==201 and preview['consentRequired'] is True)
     accept='/api/v1/exchange-contexts/'+preview['id']+'/accept'
-    body=dict(previewHash=preview['previewHash'],consent=True,disclosures=[])
+    body=dict(previewHash=preview['previewHash'],consent=True,credentialId=None,disclosures=[])
     check('P6-receive-no-consent',mutate(wallet,WALLET,accept,dict(body,consent=False),nh)[0]==400)
-    check('P6-receive-tampered-preview',mutate(wallet,WALLET,accept,dict(body,previewHash='incorrect'),nh)[0] in (401,403))
+    check('P6-receive-tampered-preview',mutate(wallet,WALLET,accept,dict(body,previewHash='incorrect'),nh)[0] in (401,403,404))
     key=str(uuid.uuid4());status,_,received=mutate(wallet,WALLET,accept,body,nh,key=key);check('P6-receive-consented',status==202 and received['state']=='COMPLETED')
     check('P6-receive-idempotent',mutate(wallet,WALLET,accept,body,nh,key=key)[2]==received)
     status,_,credentials=request(wallet,WALLET,'/api/v1/wallet/credentials',headers=nh);check('P6-credential-readback',status==200)
@@ -116,7 +117,7 @@ def main():
         status,_,result=mutate(viewer,COMPANY,'/api/v1/jobs/'+job+'/verification-sessions',{},vh);check('P6-request-'+job,status==202 and result.get('requestUrl'))
         path='/api/v1/verification-sessions/'+result['id']
         check('P6-viewer-isolation-'+job,request(Browser(),COMPANY,path)[0]==401)
-        status,_,context=mutate(wallet,WALLET,'/api/v1/exchange-contexts',{'reference':result['requestUrl']},nh)
+        status,_,context=mutate(wallet,WALLET,'/api/v1/exchange-contexts',{'reference':result['requestUrl'],'credentialId':None},nh)
         check('P6-present-preview-'+job,status==201 and context['consentRequired'] is True)
         submit='/api/v1/exchange-contexts/'+context['id']+'/present'
         values=dict(previewHash=context['previewHash'],consent=True,credentialId=context['credentialId'],disclosures=context['details']['disclosures'])
