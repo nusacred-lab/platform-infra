@@ -2,7 +2,7 @@ name: P6 patched JVM runtime
 on:
   push:
     branches: [main, codex/p6-release]
-    paths: ['.github/workflows/runtime-base.yml', 'release/Containerfile.jvm-runtime', 'ci/p6/build_runtime.py']
+    paths: ['.github/workflows/runtime-base.yml', 'release/Containerfile.jvm-runtime', 'ci/p6/build_runtime.py', 'ci/p6/scan_gate.py', 'ci/p6/go_scope.py']
   workflow_dispatch:
 permissions:
   contents: read

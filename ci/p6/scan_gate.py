@@ -3,6 +3,7 @@ import json
 from pathlib import Path
 import subprocess
 import sys
+from go_scope import prove_not_affected
 
 
 def scan(command, **kwargs):
@@ -15,12 +16,15 @@ def scan(command, **kwargs):
     detail = result.stderr or ''
     report.with_suffix(report.suffix + '.stderr.log').write_text(detail)
     sys.stderr.write(detail)
-    result.check_returncode()
     if any(marker in detail.lower() for marker in (
             'unable to get vulnerability details', 'no vulnerability details', 'failed to get vulnerability')):
         raise RuntimeError('Scanner vulnerability details are incomplete; promotion is blocked')
+    if result.returncode not in (0,1) or (result.returncode and not report.exists()):result.check_returncode()
     data = json.loads(report.read_text())
-    if any(v.get('Severity', 'UNKNOWN') in ('HIGH', 'CRITICAL', 'UNKNOWN')
-           for row in data.get('Results', []) or [] for v in row.get('Vulnerabilities', []) or []):
-        raise RuntimeError('High/Critical or unclassified vulnerability blocks promotion')
+    findings=[(row,v) for row in data.get('Results', []) or [] for v in row.get('Vulnerabilities', []) or []]
+    if result.returncode and not findings:result.check_returncode()
+    for row,v in findings:
+        if v.get('Severity','UNKNOWN') in ('HIGH','CRITICAL','UNKNOWN'):
+            if v.get('Severity')=='UNKNOWN' and prove_not_affected(command,row,v,report):continue
+            raise RuntimeError('High/Critical or unclassified vulnerability blocks promotion')
     return result

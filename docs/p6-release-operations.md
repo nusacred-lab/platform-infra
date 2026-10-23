@@ -81,3 +81,16 @@ reject missing vulnerability details even after exit zero, retain scanner stderr
 and remove an old report before rescanning. Regression tests cover this exact
 false-success condition and stale-report reuse. The daily scanner applies the
 same gate; no CVE ignore or exception was added.
+
+The scanner also reports the module-level UNKNOWN advisory
+[GO-2026-5932](https://pkg.go.dev/vuln/GO-2026-5932). Its affected packages are
+specifically `golang.org/x/crypto/openpgp` and descendants, not the entire
+`x/crypto` module. Keep this finding in the scan report. `go_scope.py` permits a
+`not_affected / vulnerable_code_not_present` resolution only after checking the
+actual Linux amd64, CGO-disabled import graph for the source or image. The pinned
+Go compiler produces this graph immediately before building Caddy/Mailpit; the
+final image includes it, so the image signature binds both graph and binary.
+Source checks run `go list -mod=readonly -deps .` in the same pinned toolchain
+against read-only source. Empty graphs, affected OpenPGP imports, other UNKNOWN
+advisories and missing metadata still fail closed. Per-scan scope records and
+complete import lists are retained beside the unmodified scanner findings.

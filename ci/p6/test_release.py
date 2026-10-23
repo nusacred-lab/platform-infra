@@ -10,6 +10,7 @@ import subprocess
 import sys
 import tempfile
 from scan_gate import scan
+from go_scope import safe_graph
 
 ROOT=Path(__file__).resolve().parents[2]
 spec=importlib.util.spec_from_file_location('installer',ROOT/'release/install.py')
@@ -63,6 +64,12 @@ class ReleasePolicyTest(unittest.TestCase):
         self.assertEqual(compose['services']['init-storage']['cap_add'],['CHOWN'])
 
 class ScannerHealthTest(unittest.TestCase):
+    def test_openpgp_scope_requires_an_import_graph_without_affected_packages(self):
+        self.assertFalse(safe_graph(''))
+        self.assertFalse(safe_graph('fmt\ngolang.org/x/crypto/openpgp\nmain\n'))
+        self.assertFalse(safe_graph('fmt\ngolang.org/x/crypto/openpgp/packet\nmain\n'))
+        self.assertTrue(safe_graph('fmt\ngolang.org/x/crypto/bcrypt\nmain\n'))
+
     def run_fixture(self, program, previous=False):
         with tempfile.TemporaryDirectory() as directory:
             report=Path(directory)/'scan.json'
