@@ -1,0 +1,102 @@
+{
+  "schemaVersion": 1,
+  "scope": "synthetic-isolated-demo-only",
+  "productionEligible": false,
+  "sources": {
+    "schemaVersion": 1,
+    "application": {
+      "repository": "nusacred-lab/competency-proof",
+      "commit": "00899ca156e7bef0af060d9872ffe693ef6d772a"
+    },
+    "fork": {
+      "repository": "nusacred-lab/waltid-identity",
+      "commit": "5fb528c5c02b70491bd5a98195db0e2b285c2c47"
+    }
+  },
+  "infrastructureRevision": "f33b988594560a5939e32bc9c6a546b6d7f442e5",
+  "workflow": {
+    "repository": "nusacred-lab/platform-infra",
+    "path": ".github/workflows/release.yml",
+    "ref": "refs/heads/codex/p6-release",
+    "commit": "f33b988594560a5939e32bc9c6a546b6d7f442e5",
+    "runId": "39902945224"
+  },
+  "images": {
+    "custodian": {
+      "image": "ghcr.io/nusacred-lab/competency-proof-custodian@sha256:3377b3014ddd33c3f2b467dbcd595efdceb091a8b04c36df27ada662708b687f",
+      "sourceRevision": "00899ca156e7bef0af060d9872ffe693ef6d772a",
+      "signerIdentity": "https://github.com/nusacred-lab/platform-infra/.github/workflows/release.yml@refs/heads/codex/p6-release"
+    },
+    "issuer": {
+      "image": "ghcr.io/nusacred-lab/competency-proof-issuer@sha256:3de26dbde83082dc2f3a021f943914204bcbc10a86d032dce51c2544d8c15cc4",
+      "sourceRevision": "00899ca156e7bef0af060d9872ffe693ef6d772a",
+      "signerIdentity": "https://github.com/nusacred-lab/platform-infra/.github/workflows/release.yml@refs/heads/codex/p6-release"
+    },
+    "company": {
+      "image": "ghcr.io/nusacred-lab/competency-proof-company@sha256:80aaa5a2c5dd765acc55b1549ed0650d618722da5101e0ea595b31dfc09be6c3",
+      "sourceRevision": "00899ca156e7bef0af060d9872ffe693ef6d772a",
+      "signerIdentity": "https://github.com/nusacred-lab/platform-infra/.github/workflows/release.yml@refs/heads/codex/p6-release"
+    },
+    "walt-issuer": {
+      "image": "ghcr.io/nusacred-lab/competency-proof-walt-issuer@sha256:528730895d2914cb4a50ea604a7a8800c3ffdbd9d2b92b19f0412da3b106d166",
+      "sourceRevision": "5fb528c5c02b70491bd5a98195db0e2b285c2c47",
+      "signerIdentity": "https://github.com/nusacred-lab/platform-infra/.github/workflows/release.yml@refs/heads/codex/p6-release"
+    },
+    "walt-wallet": {
+      "image": "ghcr.io/nusacred-lab/competency-proof-walt-wallet@sha256:20afef1b1640c6508d77bb91603f730c219f7cc1374a4a4c8aebe52dc65a1335",
+      "sourceRevision": "5fb528c5c02b70491bd5a98195db0e2b285c2c47",
+      "signerIdentity": "https://github.com/nusacred-lab/platform-infra/.github/workflows/release.yml@refs/heads/codex/p6-release"
+    },
+    "walt-verifier": {
+      "image": "ghcr.io/nusacred-lab/competency-proof-walt-verifier@sha256:ea5397eeabd464e79a7b3a8c22bbaebc77664824769ac2e10b3a4ecbe2429c80",
+      "sourceRevision": "5fb528c5c02b70491bd5a98195db0e2b285c2c47",
+      "signerIdentity": "https://github.com/nusacred-lab/platform-infra/.github/workflows/release.yml@refs/heads/codex/p6-release"
+    },
+    "postgres": {
+      "image": "ghcr.io/nusacred-lab/competency-proof-postgres@sha256:478e0615fd242bbc59ea212d63a785b69001f69704066512a10ba8b07e9bfb3b",
+      "sourceRevision": "f33b988594560a5939e32bc9c6a546b6d7f442e5",
+      "signerIdentity": "https://github.com/nusacred-lab/platform-infra/.github/workflows/release.yml@refs/heads/codex/p6-release"
+    },
+    "keycloak-staff": {
+      "image": "ghcr.io/nusacred-lab/competency-proof-keycloak-staff@sha256:e8f2c83d80c9548837ad4299163b9cf14c48007107271405a966efc8cf5a0cf8",
+      "sourceRevision": "f33b988594560a5939e32bc9c6a546b6d7f442e5",
+      "signerIdentity": "https://github.com/nusacred-lab/platform-infra/.github/workflows/release.yml@refs/heads/codex/p6-release"
+    },
+    "keycloak-recovery": {
+      "image": "ghcr.io/nusacred-lab/competency-proof-keycloak-recovery@sha256:13006f6252c416354d5663e8e70df87d5bb94575260a9ca583dd80d3fba9c527",
+      "sourceRevision": "f33b988594560a5939e32bc9c6a546b6d7f442e5",
+      "signerIdentity": "https://github.com/nusacred-lab/platform-infra/.github/workflows/release.yml@refs/heads/codex/p6-release"
+    },
+    "edge": {
+      "image": "ghcr.io/nusacred-lab/competency-proof-edge@sha256:f7c7f7bc276957e63deeaf3e54a98842517b5b6c59a782e056449dca3739e2d1",
+      "sourceRevision": "f33b988594560a5939e32bc9c6a546b6d7f442e5",
+      "signerIdentity": "https://github.com/nusacred-lab/platform-infra/.github/workflows/release.yml@refs/heads/codex/p6-release"
+    },
+    "mail": {
+      "image": "ghcr.io/nusacred-lab/competency-proof-mail@sha256:b283cb30f884c18e251865e758a9320569e7050264366f3fca243c3d52fa96c7",
+      "sourceRevision": "f33b988594560a5939e32bc9c6a546b6d7f442e5",
+      "signerIdentity": "https://github.com/nusacred-lab/platform-infra/.github/workflows/release.yml@refs/heads/codex/p6-release"
+    }
+  },
+  "schemas": {
+    "custodianRegistry": 5,
+    "businessMigrations": 3,
+    "policyVersion": "competency-v1"
+  },
+  "rollback": {
+    "databaseDowngrade": "forbidden",
+    "compatibleBaseline": "P5: registry 5, business migrations 3; restore a stopped consistent snapshot for any incompatible version"
+  },
+  "acceptance": {
+    "G6": "pending",
+    "G7": "pending"
+  },
+  "apk": {
+    "unsignedSha256": "45d645586e74f6907b0462abb7f6bfc0ba16e90a111aa3205a6c6dacaecdbded",
+    "sourceRevision": "00899ca156e7bef0af060d9872ffe693ef6d772a",
+    "versionCode": 5,
+    "versionName": "0.6.0-p6",
+    "signing": "offline-required",
+    "applicationId": "id.nusacred.wallet"
+  }
+}

@@ -100,3 +100,27 @@ Source checks run `go list -mod=readonly -deps .` in the same pinned toolchain
 against read-only source. Empty graphs, affected OpenPGP imports, other UNKNOWN
 advisories and missing metadata still fail closed. Per-scan scope records and
 complete import lists are retained beside the unmodified scanner findings.
+
+## Monitored P6 candidate
+
+`release/current.json` is the byte-exact attested manifest from
+[run 39902945224](https://github.com/nusacred-lab/platform-infra/actions/runs/39902945224),
+workflow commit `f33b988594560a5939e32bc9c6a546b6d7f442e5`. All three build groups,
+three publication groups and assembly passed. It selects the immutable candidate
+for security monitoring; it does not deploy any installation or close G6/G7.
+The manifest deliberately retains its original pending acceptance fields.
+The daily schedule becomes active only after this workflow reaches the default
+branch; a candidate-branch push/dispatch proves the same scanner before merge.
+
+Independent installation verified the archive/manifest attestations and all eleven
+image signatures, provenance and SBOMs. Anonymous pulls matched the image config
+digests scanned in CI. A separate fresh-database scan of those exact local Docker
+digests passed the strict gate. A workstation remote-transport attempt failed on
+DNS timeouts and was retained as failure evidence, rather than treated as clean.
+The workflow uses remote registry transport on its ephemeral GitHub runner.
+
+The APK attached to the draft application release is signed offline, has the same
+ZIP payload as the CI APK, and is byte-identical to the version-code 5 APK updated
+in place on the physical device. Biometric access and the existing credential
+were confirmed by the operator. This physical check used the existing demo
+backend; final registry-backend client walkthrough acceptance remains separate.
