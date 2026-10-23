@@ -5,6 +5,6 @@ COPY . .
 RUN GOTOOLCHAIN=local go mod verify && CGO_ENABLED=0 GOTOOLCHAIN=local go list -mod=readonly -deps . > /go-packages.txt && CGO_ENABLED=0 GOTOOLCHAIN=local go build -trimpath -ldflags="-s -w -X github.com/axllent/mailpit/config.Version=1.32.0-nusacred-go1.27.3" -o /mailpit
 # Retain the reviewed minimal OS/CA layer; replace the complete embedded application.
 FROM axllent/mailpit:v1.31.5@sha256:94f6b70c1436defae6799d9ac7ff0eeff9540465b842026d5cdb018f1c0234ea
-RUN apk add --no-cache musl=1.2.6-r3 musl-utils=1.2.6-r3
+RUN apk add --no-cache musl=1.2.6-r3 musl-utils=1.2.6-r3 ca-certificates-bundle=20261020-r0
 COPY --from=builder /mailpit /mailpit
 COPY --from=builder /go-packages.txt /usr/share/nusacred/go-packages.txt

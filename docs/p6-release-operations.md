@@ -82,6 +82,12 @@ and remove an old report before rescanning. Regression tests cover this exact
 false-success condition and stale-report reuse. The daily scanner applies the
 same gate; no CVE ignore or exception was added.
 
+Both Alpine runtime recipes also pin `ca-certificates-bundle=20261020-r0`,
+following the vendor's eMudhra trust-store update. PostgreSQL aligns OpenSSL
+(`libcrypto3`/`libssl3` 3.5.9-r0) and zlib (1.3.2-r1) with the security release;
+Mailpit's pinned base already contains those versions. Candidate `7c771e8` was
+cancelled before promotion while completing these vendor security updates.
+
 The scanner also reports the module-level UNKNOWN advisory
 [GO-2026-5932](https://pkg.go.dev/vuln/GO-2026-5932). Its affected packages are
 specifically `golang.org/x/crypto/openpgp` and descendants, not the entire
