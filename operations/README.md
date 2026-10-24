@@ -168,7 +168,7 @@ until actual public APK, SMTP recovery, alert, load and restore evidence passes.
 ## Custodian invitation menu update
 
 The P6 custodian UI used the same body for Service overview and Recovery & access.
-The application update on `codex/p7-custodian-invitations` separates these pages
+The application update merged in competency-proof PR #10 separates these pages
 and adds Participant invitations. It requires a **new verified application
 release**, not an asset replacement inside a running container. Do not change the
 existing attested package or claim that the menu is live before that release is
