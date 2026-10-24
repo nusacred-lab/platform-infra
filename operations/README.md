@@ -36,8 +36,9 @@ available. Do not start another full acceptance/restore stack alongside P7.
 
 The private runtime is `<workspace>/runtime/p7/active`, with SMTP input in
 `<workspace>/runtime/p7/smtp.json`. Recover the P7 state from its authenticated
-encrypted snapshot; do not regenerate issuer or wallet keys. Use the original
-verified P6 distribution in `<workspace>/runtime/p6/final-distribution/competency-proof`.
+encrypted snapshot; do not regenerate issuer or wallet keys. Use the verified package selected by `--package` in the installed user services.
+Keep the original P6 package in `<workspace>/runtime/p6/final-distribution/competency-proof`
+as the retained rollback baseline; `release/current.json` records the monitored release.
 After correcting the runtime path in compose.env, prepare with
 `--host-mode workstation`. Existing operations.json supplies operator/dates; for a
 new installation pass `--operator-config /private/operator.json` with owner,
@@ -187,7 +188,9 @@ The client secret stays in `<private-runtime>/wallet-invitations-secret` (0444 w
 mounted only into custodian. Compose retains host permissions; the file must be
 readable by the unprivileged container user. It uses wallet-realm user administration roles
 `manage-users`, `view-users`, `query-users`, `view-realm`, with Full Scope Allowed
-off and only these client role scopes. These roles can manage wallet realm users;
+off and these client role scopes. Keycloak's built-in `view-users` role is composite
+and also contributes the inherited read-only `query-groups` role to the token.
+These roles can manage wallet realm users;
 they must be treated as privileged. The application fixes the target realm and
 assigns only `applicant`. It receives no master/bootstrap admin secret and no
 issuer/company administration access. See the

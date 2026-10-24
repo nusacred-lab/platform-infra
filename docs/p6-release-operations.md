@@ -101,7 +101,29 @@ against read-only source. Empty graphs, affected OpenPGP imports, other UNKNOWN
 advisories and missing metadata still fail closed. Per-scan scope records and
 complete import lists are retained beside the unmodified scanner findings.
 
-## Monitored P6 candidate
+## Current monitored release — 24 October 2026
+
+`release/current.json` is the byte-exact attested manifest from
+[run 40097272548](https://github.com/nusacred-lab/platform-infra/actions/runs/40097272548),
+workflow commit `2bc6c4e9feda4297cd97ae062e7f1e7207ce0dd4` on `main`.
+It binds application `66948a755870f178e04138a916ca1ed2f5ddaba4` and fork
+`5fb528c5c02b70491bd5a98195db0e2b285c2c47`. The manifest SHA-256 is
+`85977790c8270e368a69326cce49ad29ee591bd8fd6804b9395d275e0649f831`.
+All build, publication and assembly groups passed. Archive/manifest attestations,
+eleven image signatures, provenance and SBOMs were independently verified before
+workstation deployment. Transfers preserved exact digest pins; no source build
+ran on the demo host. PostgreSQL's Brotli library is patched in this release.
+
+P7 live checks confirm fourteen services use the selected digests, retained wallet
+mapping/credential bytes/keys, administrator/CSRF/participant boundaries, scoped
+invitation-client permissions and public login. Browser checks confirm distinct
+Service overview, Recovery & access and Participant invitations pages. No new
+participant invitation email was sent by deployment checks. The existing Android
+APK remains compatible; application sessions require fresh login after restart.
+The attested pending acceptance fields remain untouched. Remaining G7 lifecycle,
+physical-device and independent backup/monitoring acceptance is still open.
+
+## Previously monitored P6 candidate
 
 `release/current.json` is the byte-exact attested manifest from
 [run 39902945224](https://github.com/nusacred-lab/platform-infra/actions/runs/39902945224),
