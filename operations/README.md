@@ -81,6 +81,16 @@ must remain disabled until the disposable lifecycle rehearsal passes. Never clai
 scheduled future deletion has already happened. User services start at login;
 headless boot/linger, sleep/resume and power-loss behavior require separate proof.
 
+Scheduled workstation retirement stops both monitors, their timers, backup work,
+tunnel, relay and log collector before removing P7 files. Its explicit private
+artifact inventory also covers the invitation release/rollback configuration,
+restore inputs, disposable rehearsal evidence and private result/registry copies.
+It preserves the pre-local legacy checkpoints and unclassified operator files,
+refuses path aliases, and refuses to retire a running rehearsal. Successful
+deletion audit is written only after all selected private copies are removed.
+Do not execute retirement against the active demo to test this policy; use the
+temporary-workspace regression tests and a disposable lifecycle rehearsal.
+
 The operator approved switching the existing Pinggy names to public loopback
 28443. Keep strict host-key checking, never print the private SSH username, and
 remove the force takeover option after switching. Do not forward private admin
