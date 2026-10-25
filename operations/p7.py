@@ -11,6 +11,7 @@ import importlib.util
 import json
 import os
 from pathlib import Path
+import re
 import shutil
 import smtplib
 import socket
@@ -180,24 +181,50 @@ def admin(a, entity, domain):
     return i, result['access_token']
 
 
+def require_cached_images(a, installer_api, manifest):
+    """Check exact verified default-profile images without contacting a registry."""
+    env = installer_api.env_read(a.runtime/'compose.env')
+    approved = {row['image'] for row in manifest['images'].values()}
+    required = set()
+    for service in load(a.runtime/'deployment.json')['services'].values():
+        if service.get('profiles'):
+            continue
+        reference = service['image']
+        variable = re.fullmatch(r'\$\{([A-Z][A-Z0-9_]*)(?::[^}]*)?\}', reference)
+        image = env.get(variable.group(1)) if variable else reference
+        if image not in approved or not re.fullmatch(r'.+@sha256:[a-f0-9]{64}', image):
+            raise ValueError('Runtime service image is outside the verified manifest')
+        required.add(image)
+    if not required:
+        raise ValueError('No default-profile runtime images selected')
+    for image in sorted(required):
+        inspected = subprocess.run(['docker', 'image', 'inspect', image],
+                                   stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
+        if inspected.returncode:
+            raise RuntimeError('Verified runtime image missing locally; preload the verified package before startup')
+    return len(required)
+
+
 def start(a):
     if dt.datetime.now(dt.timezone.utc) >= dt.datetime.fromisoformat(load(a.runtime/'operations.json')['closesAt']):
         raise ValueError('Demo period has ended; refuse startup')
     if (a.runtime/'closed.json').exists():
         raise ValueError('Demo is closed; explicit operator review is required before reopening')
     i = installer(a.package)
-    i.check_runtime(a.runtime)
-    compose(a, 'pull', stdout=subprocess.DEVNULL)
+    manifest = i.check_runtime(a.runtime)
+    require_cached_images(a, i, manifest)
     # Create the Docker chains before restricting egress; no IdP starts yet.
     workstation = load(a.runtime/'operations.json').get('hostMode') == 'workstation'
     if workstation:
-        compose(a, 'create', stdout=subprocess.DEVNULL)
+        compose(a, 'create', '--pull', 'never', stdout=subprocess.DEVNULL)
         run('systemctl', '--user', 'start', 'competency-proof-p7-logs.service', 'competency-proof-p7-smtp-relay.service')
     else:
-        compose(a, 'create', 'postgres', stdout=subprocess.DEVNULL)
+        compose(a, 'create', '--pull', 'never', 'postgres', stdout=subprocess.DEVNULL)
         firewall(a)
     def invoke(env_path, *args):
         args = tuple(x for x in args if x != 'mail')
+        if args and args[0] in ('create', 'up'):
+            args = (args[0], '--pull', 'never', *args[1:])
         compose(a, *args, stdout=subprocess.DEVNULL)
     i.compose = invoke
     i.start(a.runtime)
