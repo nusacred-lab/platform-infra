@@ -106,13 +106,14 @@ def main():
         if ids:
             raise ValueError('A P7 writer is still running')
         if not a.rehearsal:
-            subprocess.run(systemctl+['stop',
-                'competency-proof-p7-health.timer', 'competency-proof-p7-public.timer',
-                'competency-proof-p7-backup.timer', 'competency-proof-p7-close.timer',
-                'competency-proof-p7-health.service', 'competency-proof-p7-public.service',
-                'competency-proof-p7-backup.service', 'competency-proof-p7-tunnel.service',
-                'competency-proof-p7-smtp-relay.service', 'competency-proof-p7-logs.service',
-                'competency-proof-p7.service'], check=True)
+            units = ['competency-proof-p7-health.timer', 'competency-proof-p7-backup.timer',
+                     'competency-proof-p7.service']
+            if workstation:
+                units += ['competency-proof-p7-public.timer', 'competency-proof-p7-close.timer',
+                          'competency-proof-p7-health.service', 'competency-proof-p7-public.service',
+                          'competency-proof-p7-backup.service', 'competency-proof-p7-tunnel.service',
+                          'competency-proof-p7-smtp-relay.service', 'competency-proof-p7-logs.service']
+            subprocess.run(systemctl+['stop', *units], check=True)
         ops.compose(a, 'down', stdout=subprocess.DEVNULL)
         volumes = subprocess.check_output(['docker', 'volume', 'ls', '--filter', 'label=com.docker.compose.project='+project, '--format', '{{.Name}}'], text=True).split()
         if any(not x.startswith(project+'_') for x in volumes):
