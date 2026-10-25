@@ -81,6 +81,15 @@ must remain disabled until the disposable lifecycle rehearsal passes. Never clai
 scheduled future deletion has already happened. User services start at login;
 headless boot/linger, sleep/resume and power-loss behavior require separate proof.
 
+Daily startup validates the private runtime's verified manifest and requires its
+selected default-profile image digests in the local Docker cache. It never pulls
+implicitly; Compose creation/startup also uses `--pull never`. This prevents a
+registry/DNS outage from blocking a prepared host. Missing images fail before
+service or identity changes: explicitly preload the verified package's digest
+pins with its `install.py pull --runtime <private-runtime>` while registry access
+is available. Startup does not build images or substitute tags. Public DNS,
+tunnel and SMTP still need their normal network access.
+
 Scheduled workstation retirement stops both monitors, their timers, backup work,
 tunnel, relay and log collector before removing P7 files. Its explicit private
 artifact inventory also covers the invitation release/rollback configuration,
