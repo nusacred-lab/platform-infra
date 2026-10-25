@@ -9,6 +9,36 @@ import shutil
 import subprocess
 
 
+def workstation_private_artifacts(workspace):
+    """Inventory only P7 copies; never sweep legacy checkpoints or unknown files."""
+    workspace = Path(workspace).resolve()
+    root = workspace/'runtime/p7'
+    paths = [workspace/'runtime/backups/p7']
+    paths += [root/name for name in (
+        'prepared', 'local-restore-input', 'invitation-release', 'closure-suite',
+        'rehearsal', 'backup-decryption-key.pem', 'backup-recipient.pem',
+        'company-results-private.json', 'decline-registry-private.json',
+    )]
+    # Refuse aliases before any deletion: a retained copy must not redirect cleanup
+    # into another project's files, even when the final component is not a link.
+    for path in paths:
+        if path.resolve() != path:
+            raise ValueError('Private artifact inventory contains a path alias')
+    return paths
+
+
+def remove_private_artifacts(paths):
+    removed = 0
+    for path in paths:
+        if path.is_dir():
+            shutil.rmtree(path)
+            removed += 1
+        elif path.exists():
+            path.unlink()
+            removed += 1
+    return removed
+
+
 def validate_target(runtime, project, rehearsal, workstation=False):
     expected = 'competency-proof-p7-rehearsal' if rehearsal else 'competency-proof-p7'
     folder = 'p7-rehearsal' if rehearsal else 'p7'
@@ -59,11 +89,31 @@ def main():
     else:
         if not (a.runtime/'closed.json').exists():
             raise ValueError('Close and revoke access before deletion')
+        workspace = Path(__file__).resolve().parents[3]
+        artifacts = workstation_private_artifacts(workspace) if workstation and not a.rehearsal else []
+        if workstation and not a.rehearsal:
+            if a.smtp.resolve() != workspace/'runtime/p7/smtp.json':
+                raise ValueError('Workstation SMTP path must be the selected P7 input')
+            rehearsal_ids = subprocess.check_output(['docker', 'ps', '-q', '--filter',
+                'label=com.docker.compose.project=competency-proof-p7-rehearsal'], text=True).split()
+            if rehearsal_ids:
+                raise ValueError('Stop the disposable rehearsal before retiring its private files')
+            rehearsal_volumes = subprocess.check_output(['docker', 'volume', 'ls', '-q', '--filter',
+                'label=com.docker.compose.project=competency-proof-p7-rehearsal'], text=True).split()
+            if rehearsal_volumes:
+                raise ValueError('Complete disposable volume deletion before retiring P7')
         ids = subprocess.check_output(['docker', 'ps', '-q', '--filter', 'label=com.docker.compose.project='+project], text=True).split()
         if ids:
             raise ValueError('A P7 writer is still running')
         if not a.rehearsal:
-            subprocess.run(systemctl+['stop', 'competency-proof-p7-health.timer', 'competency-proof-p7-backup.timer', 'competency-proof-p7.service'], check=True)
+            units = ['competency-proof-p7-health.timer', 'competency-proof-p7-backup.timer',
+                     'competency-proof-p7.service']
+            if workstation:
+                units += ['competency-proof-p7-public.timer', 'competency-proof-p7-close.timer',
+                          'competency-proof-p7-health.service', 'competency-proof-p7-public.service',
+                          'competency-proof-p7-backup.service', 'competency-proof-p7-tunnel.service',
+                          'competency-proof-p7-smtp-relay.service', 'competency-proof-p7-logs.service']
+            subprocess.run(systemctl+['stop', *units], check=True)
         ops.compose(a, 'down', stdout=subprocess.DEVNULL)
         volumes = subprocess.check_output(['docker', 'volume', 'ls', '--filter', 'label=com.docker.compose.project='+project, '--format', '{{.Name}}'], text=True).split()
         if any(not x.startswith(project+'_') for x in volumes):
@@ -71,21 +121,13 @@ def main():
         for volume in volumes:
             ops.run('docker', 'volume', 'rm', volume, stdout=subprocess.DEVNULL)
         audit = a.runtime.parent/(project+'-deletion-audit.json')
-        ops.save(audit, {'deletedAt': now.isoformat(), 'project': project, 'volumeCount': len(volumes)})
         shutil.rmtree(a.runtime)
         a.smtp.unlink(missing_ok=True)
         a.smtp.with_name('smtp.before-host-fix.json').unlink(missing_ok=True)
-        if workstation and not a.rehearsal:
-            workspace = Path(__file__).resolve().parents[3]
-            backups = workspace/'runtime/backups/p7'
-            if backups.exists():
-                shutil.rmtree(backups)
-            for name in ('prepared', 'local-restore-input'):
-                path = workspace/'runtime/p7'/name
-                if path.exists():
-                    shutil.rmtree(path)
-            for name in ('backup-decryption-key.pem', 'backup-recipient.pem'):
-                (workspace/'runtime/p7'/name).unlink(missing_ok=True)
+        removed = remove_private_artifacts(artifacts)
+        # Publish successful deletion evidence only after every selected copy is gone.
+        ops.save(audit, {'deletedAt': now.isoformat(), 'project': project,
+                        'volumeCount': len(volumes), 'privateArtifactsRemoved': removed})
         print('PASS: exact P7 runtime and project volumes deleted; sanitized audit retained')
 
 
