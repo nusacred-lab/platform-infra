@@ -1,48 +1,139 @@
-# Platform Infrastructure — Competency Proof
+# Competency Proof Infrastructure
 
-Infrastructure and release controls for the nusacred-lab synthetic-data demo.
-Target operations: one local Linux x86_64 host with Docker Compose and Pinggy Pro
-TLS passthrough. Caddy terminates TLS locally. Public demo hostnames live under
-`demo.inoerawan.id`; Rumahweb manages DNS. Builds primarily run on ephemeral
-GitHub Actions runners, outside the active demo runtime. Encrypted off-host
-backups, restoration, and rollback remain required.
+Docker Compose deployment, release packaging and operational tools for
+[Competency Proof](https://github.com/nusacred-lab/competency-proof), a digital
+credential demo for an electrical installation technician.
 
-The [local demo runbook](docs/local-demo.md) prepares a loopback-only TLS probe.
-It does not deploy the application, Keycloak, or credential services. Public
-routing and G1 containment must be reviewed before those services are exposed.
+The stack runs real walt.id issuer, wallet and verifier services alongside the
+application portals, identity services and persistent storage. It supports the
+complete journey: issue a synthetic competency credential, receive and store it
+in a custodial wallet, then present it to an employer for verification.
 
-P1 status: repository and CI foundations. Production configuration is not yet
-ready to deploy. Do not use the Python harness Compose setup as a public
-deployment. Store only templates without secrets. Databases, keys, keystores,
-tokens, runtime data, and backups belong in private storage. Pull request
-workflows have no deployment or publishing privileges.
+## What's in the stack
 
-Local check: `python3 ci/check_policy.py`. CI scans the full Git history and
-reviews dependency changes. See SECURITY-PROJECT.md for control and review limits.
-Project code: Apache-2.0 (LICENSE).
+| Component | Role |
+| --- | --- |
+| Issuer application | Assessment records and credential offers for LSP Nusantara |
+| Custodian application | Wallet access, consent, invitations and account recovery for NusaCred Wallet |
+| Employer application | Job requirements, issuer trust and verification results for Karya Instalasi |
+| walt.id issuer, wallet and verifier | Credential issuance, server-side storage and cryptographic verification |
+| Keycloak and PostgreSQL | Independent identity services and databases for the three organizations |
+| Caddy | HTTPS termination and routing to public application endpoints |
+| Mailpit | Private mailbox for isolated installation testing |
 
-All repository work must use English; see [AGENTS.md](AGENTS.md).
+The Android wallet is installed separately. Application and wallet state persist
+in Docker volumes; credentials and holder signing keys remain on the server.
+Public deployment replaces the test mailbox with authenticated SMTP and adds
+tunnel, monitoring, backup and lifecycle management.
 
-## Private P2 identity proof
+## Install an isolated demo
 
-The P2 branch adds production-mode Keycloak/PostgreSQL, private synthetic SMTP,
-and loopback-only diagnostics on independent networks and persistent volumes.
-See [P2 identity proof](docs/P2-identity-proof.md) for pinned image/source builds,
-security checks, restart evidence, reproduction and remaining recovery work.
-P2/G2 passed for the synthetic prerelease on 22 October 2026.
+Use Linux x86_64 with Docker Engine, Compose v2, Python 3, OpenSSL, GitHub CLI and
+Cosign 3.1.3. Authenticate to GitHub and GHCR if the selected artifacts or images
+are private. The host does not need application source, Gradle, a JDK or an Android
+SDK.
 
-Current P2 work includes a persistent custodian recovery registry, guarded
-Keycloak password changes, private role-separated portal BFFs and isolated
-source-built protocol services. See [P2 recovery operations](docs/P2-recovery-proof.md).
-Public login and the signed Android certificate association are active. The
-credential/recovery public override was explicitly approved and is active;
-physical scan, recovery, fresh-install presentation and bounded-session tests
-passed. Production and operations gates remain separate.
+The [installation guide](release/README.md) contains the full verification and
+setup procedure. The essential steps are:
 
-## P6 image distribution and Compose installation
+1. Select a successful [release workflow](.github/workflows/release.yml) run and
+   independently review its full infrastructure commit and branch.
+2. Download its `p6-distribution` artifact. Verify the Compose archive's GitHub
+   attestation against that commit and branch before extracting it.
+3. From the extracted `competency-proof` directory, prepare a private runtime and
+   start the stack:
 
-The [release package](release/README.md) provides source-free, digest-pinned
-installation. Its [release workflow](.github/workflows/release.yml) builds/scans
-application, fork and supporting images on GitHub, then signs and publishes
-synthetic candidate images to GHCR. G6 acceptance and P7 deployment remain
-separate gates.
+   ```sh
+   python3 install.py prepare --runtime /absolute/private/runtime/demo \
+     --trusted-commit FULL_REVIEWED_INFRA_COMMIT
+   python3 install.py pull --runtime /absolute/private/runtime/demo
+   python3 install.py up --runtime /absolute/private/runtime/demo
+   ```
+
+   This example selects a release from `main`. For the retained candidate branch,
+   follow the exact branch verification instructions in the installation guide.
+
+Preparation verifies the release manifest, image signatures, provenance and SBOMs,
+then generates fresh keys, secrets and synthetic accounts. Account credentials
+are written to `installation.json` inside the private runtime. Keep that directory
+outside source control with a private parent directory (mode 0700).
+
+The release uses digest-pinned images with no on-host builds. The Compose
+definition is [release/compose.yaml](release/compose.yaml); run the installer from
+the verified distribution, which also contains its attested release manifest.
+A source checkout alone is not the assembled installation package.
+
+## Access and credential walkthrough
+
+The prepared stack binds HTTPS to `127.0.0.1:28443`, private identity administration
+to `127.0.0.1:28444` and the test mailbox to `127.0.0.1:28025`. Local browser access
+requires hostname mappings and certificate trust as described in the installation
+guide. The default staging certificate is not trusted by Android.
+
+Public routing uses these application hostnames:
+
+| Interface | Hostname |
+| --- | --- |
+| Issuer portal | `lsp-nusantara.demo.inoerawan.id` |
+| Wallet provider portal and Android App Links | `dompet-identitas.demo.inoerawan.id` |
+| Employer portal and public job page | `karya-instalasi.demo.inoerawan.id` |
+
+Those hostnames need operator-controlled DNS, trusted TLS and ingress configuration;
+starting a fresh installation does not publish it at those addresses. The signed
+APK must match the wallet origin and published signing-certificate association.
+Never expose private administration, mailbox, database or diagnostic listeners.
+
+With the services and matching APK running:
+
+1. Sign in to the wallet and copy the participant's recipient code.
+2. In the issuer portal, record a synthetic assessment for that recipient and
+   create a credential offer.
+3. Scan the offer in the Android wallet, review it and approve receipt. Confirm
+   the issued credential appears in the wallet.
+4. In the employer portal, configure the job requirement and approve the issuer
+   through **Trusted issuers**.
+5. Open the public job page, select **Check my competency**, then scan or open the
+   request in the wallet. Select the credential and approve presentation.
+6. Read the verification result on the job page and in the employer portal. The
+   result combines proof verification with issuer trust and the job requirement.
+
+See the application's
+[wallet and portal guide](https://github.com/nusacred-lab/competency-proof/blob/main/docs/p5-experience.md)
+for consent, recovery and verification behavior.
+
+## Operate the deployment
+
+The public demo runs on an operator workstation with Caddy and Pinggy Pro TLS
+passthrough. The [operations runbook](operations/README.md) covers daily start and
+shutdown, SMTP, participant invitations, monitoring, encrypted backups, restoration
+and scheduled retirement. It also documents the dedicated-VM variant.
+
+Updates must use a verified release and retain the existing keys, volumes and
+account-to-wallet mappings. Take a consistent encrypted backup before updating.
+Rollback across incompatible database schemas requires the matching snapshot;
+do not remove retained volumes during an update or restart.
+
+The workstation setup depends on the host and its internet connection. Its local
+backups and monitors share that host, so independent off-host storage and outage
+detection remain limitations. This is a synthetic demonstration deployment, not
+a production service.
+
+## Repository guide
+
+| Path | Contents |
+| --- | --- |
+| `release/` | Compose definition, installer, public templates and release image manifest |
+| `operations/` | Deployment lifecycle, invitations, monitoring, backup and restore tools |
+| `ci/` and `.github/workflows/` | Build, scan, sign, publish and package automation |
+| `docs/` | Detailed setup and validation records |
+| `local-demo/`, `p2/`–`p5/` and `scripts/` | Earlier integration environments and supporting diagnostics |
+
+Run `python3 ci/check_policy.py` from the repository root to check source-control
+and workflow policy. See [SECURITY-PROJECT.md](SECURITY-PROJECT.md) for security and
+review controls. Secrets, private runtime configuration, keys and backups belong
+outside this repository.
+
+Licensed under [Apache-2.0](LICENSE). Application source is maintained in
+[competency-proof](https://github.com/nusacred-lab/competency-proof); credential
+services are maintained in the
+[walt.id fork](https://github.com/nusacred-lab/waltid-identity).
